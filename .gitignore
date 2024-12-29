@@ -1,0 +1,17 @@
+Thumbs.db
+.DS_Store
+.vscode/
+main.dSYM/
+*.o
+*.a
+*.out
+*.com
+*.COM
+main
+*.bat
+*.command
+in.txt
+out.txt
+*.exe
+lisp
+memo.txt

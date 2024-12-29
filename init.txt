@@ -1,0 +1,136 @@
+(de caar (x) (car (car x)))
+(de cadr (x) (car (cdr x)))
+(de cdar (x) (cdr (car x)))
+(de cddr (x) (cdr (cdr x)))
+
+(de caaar (x) (car (caar x)))
+(de caadr (x) (car (cadr x)))
+(de cadar (x) (car (cdar x)))
+(de caddr (x) (car (cddr x)))
+
+(de cdaar (x) (cdr (caar x)))
+(de cdadr (x) (cdr (cadr x)))
+(de cddar (x) (cdr (cdar x)))
+(de cdddr (x) (cdr (cddr x)))
+
+(de caddar (x) (car (cddar x)))
+
+(de list x x)
+
+(de null (x)
+    (eq x '()))
+
+(de and (x y)
+    (cond (x (cond (y 't)
+                  ('t '())))
+          ('t '())))
+
+(de not (x)
+    (cond (x '())
+          ('t 't)))
+
+(de append (x y)
+    (cond ((null x) y)
+    ('t (cons (car x)
+              (append (cdr x) y)))))
+
+(de pair (x y)
+    (cond ((and (null x) (null y))
+                '())
+          ((and (not (atom x)) (not (atom y)))
+                (cons (list (car x) (car y))
+                      (pair (cdr x) (cdr y))))))
+
+(de assoc (x y)
+    (cond ((eq (caar y) x) (cadar y))
+          ('t (assoc x (cdr y)))))
+
+(de evcon (c a)
+    (cond ((eval (caar c) a)
+                 (eval (cadar c) a))
+          ('t (evcon (cdr c) a))))
+
+(de evlis (m a)
+    (cond ((null m) '())
+          ('t (cons (eval (car m) a)
+              (evlis (cdr m) a)))))
+
+(de eval (e a)
+    (cond
+        ((atom e) (assoc e a))
+        ((atom (car e))
+        (cond
+            ((eq (car e) 'quote) (cadr e))
+            ((eq (car e) 'atom) (atom (eval (cadr e) a)))
+            ((eq (car e) 'eq) (eq (eval (cadr e) a)
+                              (eval (caddr e) a)))
+            ((eq (car e) 'car) (car  (eval (cadr e) a)))
+            ((eq (car e) 'cdr) (cdr  (eval (cadr e) a)))
+            ((eq (car e) 'cons) (cons (eval (cadr e) a)
+                                      (eval (caddr e) a)))
+            ((eq (car e) 'cond) (evcon (cdr e) a))
+            ('t (eval (cons (assoc (car e) a) (cdr e)) a))))
+        ((eq (caar e) 'label)
+             (eval (cons (caddar e) (cdr e))
+                   (cons (list (cadar e) (car e)) a)))
+        ((eq (caar e) 'lambda)
+             (eval (caddar e)
+                    (append (pair (cadar e) (evlis (cdr e) a)) a)))))
+
+; eval test
+
+; = a
+(eval 'x '((x a) (y b)))
+; = t
+(eval '(eq 'a 'a) '())
+; = (a b c)
+(eval '(cons x '(b c)) '((x a) (y b)))
+; = list
+(eval '(cond ((atom x) 'atom)
+             ('t 'list))
+      '((x '(a b))))
+; = (a b c)
+(eval '(f '(b c))
+      '((f (lambda (x) (cons 'a x)))))
+; = a
+(eval '((label firstatom (lambda (x)
+                             (cond ((atom x) x)
+                             ('t (firstatom (car x))))))
+            y)
+       '((y ((a b) (c d)))))
+; = (a c d)
+(eval '((lambda (x y) (cons x (cdr y)))
+          'a
+          '(b c d))
+      '())
+
+; ---------------------------------
+
+(eval '(
+(label reverse
+    (lambda (l)
+        (cond ((eq l '()) ())
+            ('t (
+(label append2
+    (lambda (x y)
+        (cond ((eq x '()) y)
+              ('t (cons (car x)
+                    (append2 (cdr x) y))))))
+            (reverse (cdr l)) (cons (car l) ()))))))
+'(1 2 3 4 5)
+) '())
+
+; -------------------------------
+
+(de reverse (l)
+    (cond ((null l) ())
+          (t (append (reverse (cdr l)) (cons (car l) ())))))
+
+(set xxx (1 2 3 4 5 6 7 8 9 10
+           11 12 13 14 15 16 17 18 19 20
+           21 22 23 24 25 26 27 28 29 30
+           31 32 33 34 35 36 37 38 39 40
+           41 42 43 44 45 46 47 48 49 50
+           51 52 53 54 55 56 57 58 59 60
+           61 62 63 64 65 66 67 68 69 70
+          ))
