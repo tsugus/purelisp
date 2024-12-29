@@ -174,11 +174,6 @@ Index gc_cloneS(Index indx)
   }
 }
 
-Index gc_clone_f(Index args, Index env)
-{
-  return gc_cloneS(car(args));
-}
-
 Index gc_eval_f(Index form, Index env)
 {
   Index head, args, val, form2;

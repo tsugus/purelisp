@@ -365,9 +365,3 @@ void printS(Index indx)
     putchar(')');
   }
 }
-
-Index print_f(Index args, Index env)
-{
-  printS(car(args));
-  return car(args);
-}
