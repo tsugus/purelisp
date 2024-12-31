@@ -393,7 +393,7 @@ Index gc_de_f(Index args, Index env)
   return func;
 }
 
-Index gc_set_f(Index args, Index env)
+Index gc_setq_f(Index args, Index env)
 {
   Index symbol;
 

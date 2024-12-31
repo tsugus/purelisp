@@ -4,7 +4,7 @@
 /* This software is released under the */
 /*            MIT License.             */
 /*                                     */
-/*                      2024 (C) Tsugu */
+/*                 (C) 2024-2025 Tsugu */
 /*                                     */
 
 #define CELLS_SIZE 0x8000   /* セルの総数 */
@@ -98,7 +98,7 @@ Index gc_cond_f(Index, Index);
 Index gc_atom_f(Index, Index);
 Index gc_eq_f(Index, Index);
 Index gc_de_f(Index, Index);
-Index gc_set_f(Index, Index);
+Index gc_setq_f(Index, Index);
 
 Index gc_f(Index, Index);
 Index print_f(Index, Index);
