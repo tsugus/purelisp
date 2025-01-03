@@ -94,8 +94,8 @@ void initCells()
   gc_addFunc("atom", gc_atom_f);
   gc_addFunc("eq", gc_eq_f);
   gc_addFunc("de", gc_de_f);
-  gc_addFunc("set", gc_setq_f); // シンボルに値を設定
-  gc_addFunc("gc", gc_f);       // ガベージ・コレクション
+  gc_addFunc("set", gc_setq_f); /* シンボルに値を設定 */
+  gc_addFunc("gc", gc_f);       /* ガベージ・コレクション */
 }
 
 void top_loop()
