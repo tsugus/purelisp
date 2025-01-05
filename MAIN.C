@@ -94,8 +94,8 @@ void initCells()
   gc_addFunc("atom", gc_atom_f);
   gc_addFunc("eq", gc_eq_f);
   gc_addFunc("de", gc_de_f);
-  gc_addFunc("set", gc_setq_f); /* シンボルに値を設定 */
-  gc_addFunc("gc", gc_f);       /* ガベージ・コレクション */
+  gc_addFunc("setq", gc_setq_f); /* シンボルに値を設定 */
+  gc_addFunc("gc", gc_f);        /* ガベージ・コレクション */
 }
 
 void top_loop()
@@ -132,7 +132,7 @@ void greeting()
   printf("\n");
   printf("        Pure LISP Interpreter\n\n");
   printf("          p u r e  L I S P\n\n");
-  printf("           Version 0.0.2\n");
+  printf("           Version 0.0.3\n");
   printf(" This software is released under the\n");
   printf("            MIT License.\n\n");
   printf("                 (C) 2024-2025 Tsugu\n\n");
