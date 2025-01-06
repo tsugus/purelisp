@@ -61,9 +61,9 @@ typedef union CELL
 extern char textbuf[TEXTBUF_SIZE];
 extern char namebuf[TEXTBUF_SIZE];
 extern char namebuf2[TEXTBUF_SIZE];
-extern Cell *cells;
 extern char *tags;
-extern Index *stack;
+extern Cell *cells;
+extern Index stack[STACK_SIZE];
 extern char *txtp;
 extern Index freecells, toplevel;
 extern Index symbol_table[SYMBOLTABLE_SIZE];
@@ -99,7 +99,5 @@ Index gc_atom_f(Index, Index);
 Index gc_eq_f(Index, Index);
 Index gc_de_f(Index, Index);
 Index gc_setq_f(Index, Index);
-
 Index gc_f(Index, Index);
-Index print_f(Index, Index);
-Index gc_clone_f(Index, Index);
+Index quit_f(Index, Index);

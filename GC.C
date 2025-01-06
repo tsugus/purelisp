@@ -10,7 +10,10 @@
 Index push(Index indx)
 {
   if (sp >= STACK_SIZE)
+  {
+    sp = 0;
     error("The software stack overflowed.");
+  }
   stack[sp++] = indx;
   return indx;
 }

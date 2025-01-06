@@ -10,9 +10,9 @@
 char textbuf[TEXTBUF_SIZE];
 char namebuf[TEXTBUF_SIZE];
 char namebuf2[TEXTBUF_SIZE];
-Cell *cells;
 char *tags;
-Index *stack;
+Cell *cells;
+Index stack[STACK_SIZE];
 char *txtp;
 Index freecells, toplevel;
 Index symbol_table[SYMBOLTABLE_SIZE];
@@ -96,6 +96,7 @@ void initCells()
   gc_addFunc("de", gc_de_f);
   gc_addFunc("setq", gc_setq_f); /* シンボルに値を設定 */
   gc_addFunc("gc", gc_f);        /* ガベージ・コレクション */
+  gc_addFunc("quit", quit_f);    /* 終了 */
 }
 
 void top_loop()
@@ -130,32 +131,26 @@ void top_loop()
 void greeting()
 {
   printf("\n");
-  printf("        Pure LISP Interpreter\n\n");
-  printf("          p u r e  L I S P\n\n");
-  printf("           Version 0.0.3\n");
-  printf(" This software is released under the\n");
-  printf("            MIT License.\n\n");
-  printf("                 (C) 2024-2025 Tsugu\n\n");
+  printf("\t       Pure LISP Interpreter\n\n");
+  printf("\t         p u r e  L I S P\n\n");
+  printf("\t          Version 0.0.4\n");
+  printf("\tThis software is released under the\n");
+  printf("\t           MIT License.\n\n");
+  printf("\t                (C) 2024-2025 Tsugu\n\n");
 }
 
 int main()
 {
-  cells = (Cell *)malloc(sizeof(Cell) * CELLS_SIZE);
-  if (cells == NULL)
-  {
-    printf("Unable to secure a cell area.\n");
-    return 0;
-  }
   tags = (char *)malloc(sizeof(char) * CELLS_SIZE);
   if (tags == NULL)
   {
     printf("Unable to secure a cell area.\n");
     return 0;
   }
-  stack = (Index *)malloc(sizeof(Index) * STACK_SIZE);
-  if (stack == NULL)
+  cells = (Cell *)malloc(sizeof(Cell) * CELLS_SIZE);
+  if (cells == NULL)
   {
-    printf("Unable to secure a stack.\n");
+    printf("Unable to secure a cell area.\n");
     return 0;
   }
   ifp = stdin;
@@ -180,8 +175,4 @@ int main()
     else
       fclose(ifp);
   }
-  free(cells);
-  free(tags);
-  free(stack);
-  return 1;
 }

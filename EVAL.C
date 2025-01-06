@@ -415,3 +415,10 @@ Index gc_setq_f(Index args, Index env)
   }
   return symbol;
 }
+
+Index quit_f(Index args, Index env)
+{
+  free(cells);
+  free(tags);
+  exit(0);
+}
