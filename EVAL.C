@@ -62,7 +62,7 @@ Index gc_eval_args(Index args, Index env)
   args2 = args;
   while (is(args2, CELL))
   {
-    car(args2) = gc_eval_f(car(args2), env);
+    car(args2) = gc_eval(car(args2), env);
     ec;
     args2 = cdr(args2);
   }
@@ -130,7 +130,7 @@ Index gc_lambda(Index form, Index env)
   /* 関数本体の評価 */
   for (; S; S = cdr(S))
   {
-    result = gc_eval_f(car(S), env);
+    result = gc_eval(car(S), env);
     ec;
   }
   pop();
@@ -174,7 +174,7 @@ Index gc_cloneS(Index indx)
   }
 }
 
-Index gc_eval_f(Index form, Index env)
+Index gc_eval(Index form, Index env)
 {
   Index head, args, val, form2;
   Index (*f_pointer)(Index, Index);
@@ -202,7 +202,7 @@ Index gc_eval_f(Index form, Index env)
         case CELL:
           car(form) = gc_cloneS(car(cdr(head)));
           if (car(form))
-            form = gc_eval_f(form, env);
+            form = gc_eval(form, env);
           break;
         default:
           error("There is no function definition.");
@@ -261,6 +261,12 @@ Index getFromOblist(Index symbol)
     cell = cdr(cell);
   }
   return 0;
+}
+
+Index gc_eval_f(Index args, Index env)
+{
+  args = gc_eval_args(args, env);
+  return gc_eval(car(args), car(cdr(args)));
 }
 
 Index quote_f(Index args, Index env)
@@ -343,7 +349,7 @@ Index gc_cond_f(Index clauses, Index env)
   {
     if (!is(car(clauses), CELL))
       return error("A condition clause is not a list.");
-    key = gc_eval_f(car(car(clauses)), env);
+    key = gc_eval(car(car(clauses)), env);
     ec;
     if (key)
     {
@@ -352,7 +358,7 @@ Index gc_cond_f(Index clauses, Index env)
         return key;
       while (is(bodies, CELL))
       {
-        result = gc_eval_f(car(bodies), env);
+        result = gc_eval(car(bodies), env);
         ec;
         bodies = cdr(bodies);
       }
@@ -393,27 +399,159 @@ Index gc_de_f(Index args, Index env)
   return func;
 }
 
+/* (setq var_1 val_1 var_2 val_2 ...) */
 Index gc_setq_f(Index args, Index env)
 {
-  Index symbol;
+  Index var, val, indx, pair;
+
+  while (is(args, CELL))
+  {
+    if (!is(cdr(args), CELL))
+      return error("Not enough arguments.");
+    var = car(args);
+    val = gc_eval(car(cdr(args)), env);
+    ec;
+    if (!is(var, SYMBOL))
+      return error("An odd-numbered item in the list is not a symbol.");
+    /* 環境 env の検索 */
+    pair = 0;
+    for (indx = env; indx; indx = cdr(indx))
+    {
+      pair = car(indx);
+      if (var == car(pair))
+        break;
+    }
+    if (pair) /* 環境内に var があるなら、環境内の値を書き換える */
+      cdr(pair) = val;
+    else /* そうでないなら var 自身に値を設定 */
+    {
+      car(cdr(var)) = val;
+      tag(cdr(var)) = CELL;
+      /* oblist への追加 */
+      if (!getFromOblist(var))
+      {
+        Index cell = gc_getFreeCell();
+        ec;
+
+        cdr(cell) = car(cdr(3)); /* oblist のインデックスは 3 */
+        car(cdr(3)) = cell;
+        car(cell) = var;
+      }
+    }
+    args = cdr(cdr(args));
+  }
+  return val;
+}
+
+/* (psetq var_1 val_1 var_2 val_2 ...) */
+Index gc_psetq_f(Index args, Index env)
+{
+  Index indx, var, val, pair;
+
+  /* val をすべて評価する */
+  for (indx = args; is(indx, CELL); indx = cdr(cdr(indx)))
+  {
+    if (!is(cdr(indx), CELL))
+      return error("Not enough arguments.");
+    car(cdr(indx)) = gc_eval(car(cdr(indx)), env);
+  }
+  /* 各 var に各 val をセット */
+  while (is(args, CELL))
+  {
+    var = car(args);
+    val = car(cdr(args));
+    if (!is(var, SYMBOL))
+      return error("An odd-numbered item in the list is not a symbol.");
+    /* 環境 env の検索 */
+    pair = 0;
+    for (indx = env; indx; indx = cdr(indx))
+    {
+      pair = car(indx);
+      if (var == car(pair))
+        break;
+    }
+    if (pair) /* 環境内に var があるなら、環境内の値を書き換える */
+      cdr(pair) = val;
+    else /* そうでないなら var 自身に値を設定 */
+    {
+      car(cdr(var)) = val;
+      tag(cdr(var)) = CELL;
+      /* oblist への追加 */
+      if (!getFromOblist(var))
+      {
+        Index cell = gc_getFreeCell();
+        ec;
+
+        cdr(cell) = car(cdr(3)); /* oblist のインデックスは 3 */
+        car(cdr(3)) = cell;
+        car(cell) = var;
+      }
+    }
+    args = cdr(cdr(args));
+  }
+  return val;
+}
+
+/* (while condition body_1 body_2 ...) */
+Index gc_while_f(Index args, Index env)
+{
+  Index args2, flag, S, result;
 
   if (!is(args, CELL))
     return error("Not enough arguments.");
-  symbol = car(args);
-  if (!is(symbol, SYMBOL))
-    return error("The first item in the list is not a symbol.");
-  car(cdr(symbol)) = (car(cdr(args)));
-  tag(car(symbol)) = CELL;
-  /* oblist への追加 */
-  if (!getFromOblist(symbol))
+  args2 = gc_cloneS(args);
+  ec;
+  push(args2);
+  flag = gc_eval(car(args2), env);
+  ec;
+  result = 0;
+  while (flag)
   {
-    Index cell = gc_getFreeCell();
-
-    cdr(cell) = car(cdr(3)); /* oblist のインデックスは 3 */
-    car(cdr(3)) = cell;
-    car(cell) = symbol;
+    for (S = cdr(args2); S; S = cdr(S))
+    {
+      result = gc_eval(car(S), env);
+      ec;
+    }
+    pop();
+    args2 = gc_cloneS(args);
+    ec;
+    push(args2);
+    flag = gc_eval(car(args2), env);
+    ec;
   }
-  return symbol;
+  pop();
+  return result;
+}
+
+/* (until condition body_1 body_2 ...) */
+Index gc_until_f(Index args, Index env)
+{
+  Index args2, flag, S, result;
+
+  if (!is(args, CELL))
+    return error("Not enough arguments.");
+  args2 = gc_cloneS(args);
+  ec;
+  push(args2);
+  flag = gc_eval(car(args2), env);
+  ec;
+  result = 0;
+  do
+  {
+    for (S = cdr(args2); S; S = cdr(S))
+    {
+      result = gc_eval(car(S), env);
+      ec;
+    }
+    pop();
+    args2 = gc_cloneS(args);
+    ec;
+    push(args2);
+    flag = gc_eval(car(args2), env);
+    ec;
+  } while (!flag);
+  pop();
+  return result;
 }
 
 Index quit_f(Index args, Index env)

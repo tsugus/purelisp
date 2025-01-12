@@ -46,95 +46,116 @@
         ('t (assoc x (cdr y)))))
 
 (de evcon (c a)
-  (cond ((eval (caar c) a) (eval (cadar c) a))
+  (cond ((eval_ (caar c) a) (eval_ (cadar c) a))
         ('t (evcon (cdr c) a))))
 
 (de evlis (m a)
   (cond ((null m) '())
-        ('t (cons (eval (car m) a)
+        ('t (cons (eval_ (car m) a)
                   (evlis (cdr m) a)))))
 
-(de eval (e a)
+(de eval_ (e a)
   (cond
     ((atom e) (assoc e a))
     ((atom (car e))
     (cond
       ((eq (car e) 'quote) (cadr e))
-      ((eq (car e) 'atom) (atom (eval (cadr e) a)))
-      ((eq (car e) 'eq) (eq (eval (cadr e) a)
-                            (eval (caddr e) a)))
-      ((eq (car e) 'car) (car (eval (cadr e) a)))
-      ((eq (car e) 'cdr) (cdr (eval (cadr e) a)))
-      ((eq (car e) 'cons) (cons (eval (cadr e) a)
-                                (eval (caddr e) a)))
+      ((eq (car e) 'atom) (atom (eval_ (cadr e) a)))
+      ((eq (car e) 'eq) (eq (eval_ (cadr e) a)
+                            (eval_ (caddr e) a)))
+      ((eq (car e) 'car) (car (eval_ (cadr e) a)))
+      ((eq (car e) 'cdr) (cdr (eval_ (cadr e) a)))
+      ((eq (car e) 'cons) (cons (eval_ (cadr e) a)
+                                (eval_ (caddr e) a)))
       ((eq (car e) 'cond) (evcon (cdr e) a))
-      ('t (eval (cons (assoc (car e) a) (cdr e)) a))))
+      ('t (eval_ (cons (assoc (car e) a) (cdr e)) a))))
     ((eq (caar e) 'label)
-      (eval (cons (caddar e) (cdr e))
+      (eval_ (cons (caddar e) (cdr e))
             (cons (list (cadar e) (car e)) a)))
     ((eq (caar e) 'lambda)
-      (eval (caddar e)
+      (eval_ (caddar e)
             (append (pair (cadar e) (evlis (cdr e) a)) a)))))
 
-; eval test
+;; eval_ test
 
 ; = a
-(eval 'x '((x a) (y b)))
+(eval_ 'x '((x a) (y b)))
+
 ; = t
-(eval '(eq 'a 'a) '())
+(eval_ '(eq 'a 'a) '())
+
 ; = (a b c)
-(eval '(cons x '(b c)) '((x a) (y b)))
+(eval_ '(cons x '(b c)) '((x a) (y b)))
+
 ; = list
-(eval '(cond ((atom x) 'atom)
+(eval_ '(cond ((atom x) 'atom)
              ('t 'list))
   '((x '(a b))))
+
 ; = (a b c)
-(eval '(f '(b c))
+(eval_ '(f '(b c))
   '((f (lambda (x) (cons 'a x)))))
+
 ; = a
-(eval '((label firstatom (lambda (x)
+(eval_ '((label firstatom (lambda (x)
                (cond ((atom x) x)
                      ('t (firstatom (car x))))))
         y)
   '((y ((a b) (c d)))))
+
 ; = (a c d)
-(eval '((lambda (x y) (cons x (cdr y)))
+(eval_ '((lambda (x y) (cons x (cdr y)))
         'a
         '(b c d))
   '())
 
 ; ---------------------------------
 
-(eval '(
+(eval_ '(
   (lambda (lst) (
     (label reverse-rec
       (lambda (l acc)
         (cond ((eq l '()) acc)
               ('t (reverse-rec (cdr l) (cons (car l) acc))))))
     lst '()))
-  '(1 2 3))
+  '(1 2 3 4 5 6 7))
   '())
 
 ; -------------------------------
 
-(de reverse-rec (l acc)
-  (cond ((null l) acc)
-        (t (reverse-rec (cdr l) (cons (car l) acc)))))
-
-(de reverse (l) (reverse-rec l '()))
-
-(de reverse2 (l)
+(de reverse3 (l)
   (cond ((null l) ())
-        (t (append (reverse2 (cdr l)) (cons (car l) ())))))
+        (t (append (reverse3 (cdr l)) (cons (car l) ())))))
 
-(setq nn (1 2 3 4 5 6 7 8 9 10
+(de reverse2 (l) (
+  (lambda (l acc)
+    (cond ((null l) acc)
+          (t (reverse-rec2 (cdr l) (cons (car l) acc)))))
+  l '()))
+
+(de reverse' (l) (
+  (lambda (l acc)
+    (while l
+      (setq acc (cons (car l) acc)
+            l (cdr l))
+    acc))
+  l '()))
+
+(de reverse (l) (
+  (lambda (l acc)
+    (while l
+      (psetq l (cdr l)
+             acc (cons (car l) acc))))
+  l '()))
+
+(setq nn '(1 2 3 4 5 6 7 8 9 10
           11 12 13 14 15 16 17 18 19 20
           21 22 23 24 25 26 27 28 29 30
-;          31 32 33 34 35 36 37 38 39 40
-;          41 42 43 44 45 46 47 48 49 50
-;          51 52 53 54 55 56 57 58 59 60
-;          61 62 63 64 65 66 67 68 69 70
-;          71 72 73 74 75 76 77 78 79 80
-;          81 82 83 84 85 86 87 88 89 90
-;          91 92 93 94 95 96 97 98 99 100
+          31 32 33 34 35 36 37 38 39 40
+          41 42 43 44 45 46 47 48 49 50
+          51 52 53 54 55 56 57 58 59 60
+          61 62 63 64 65 66 67 68 69 70
+          71 72 73 74 75 76 77 78 79 80
+          81 82 83 84 85 86 87 88 89 90
+          91 92 93 94 95 96 97 98 99 100
 ))

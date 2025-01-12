@@ -85,7 +85,7 @@ Index gc_getFreeCell();
 Index addSymbol(int, Index);
 int hash(char *);
 Index purseS(Index);
-void addFunctions();
+Index gc_eval(Index, Index);
 Index push(Index);
 Index pop();
 
@@ -99,5 +99,8 @@ Index gc_atom_f(Index, Index);
 Index gc_eq_f(Index, Index);
 Index gc_de_f(Index, Index);
 Index gc_setq_f(Index, Index);
+Index gc_psetq_f(Index, Index);
 Index gc_f(Index, Index);
+Index gc_while_f(Index, Index);
+Index gc_until_f(Index, Index);
 Index quit_f(Index, Index);

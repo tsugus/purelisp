@@ -86,6 +86,7 @@ void initCells()
   car(cdr(3)) = 0;
 
   /* 基本関数の登録 */
+  gc_addFunc("eval", gc_eval_f);
   gc_addFunc("quote", quote_f);
   gc_addFunc("car", gc_car_f);
   gc_addFunc("cdr", gc_cdr_f);
@@ -94,9 +95,12 @@ void initCells()
   gc_addFunc("atom", gc_atom_f);
   gc_addFunc("eq", gc_eq_f);
   gc_addFunc("de", gc_de_f);
-  gc_addFunc("setq", gc_setq_f); /* シンボルに値を設定 */
-  gc_addFunc("gc", gc_f);        /* ガベージ・コレクション */
-  gc_addFunc("quit", quit_f);    /* 終了 */
+  gc_addFunc("setq", gc_setq_f);   /* 値を評価してそれぞれ変数に代入 */
+  gc_addFunc("psetq", gc_psetq_f); /* 値を一括評価後、各変数に代入 */
+  gc_addFunc("gc", gc_f);          /* ガベージ・コレクション */
+  gc_addFunc("while", gc_while_f); /* 前置判定ループ */
+  gc_addFunc("until", gc_until_f); /* 否定的後置判定ループ */
+  gc_addFunc("quit", quit_f);      /* インタプリタを出る */
 }
 
 void top_loop()
@@ -119,7 +123,7 @@ void top_loop()
       *txtp = '\0';
       continue;
     }
-    toplevel = gc_eval_f(toplevel, 0);
+    toplevel = gc_eval(toplevel, 0);
     if (err == off)
     {
       printS(toplevel);
@@ -133,7 +137,7 @@ void greeting()
   printf("\n");
   printf("\t       Pure LISP Interpreter\n\n");
   printf("\t         p u r e  L I S P\n\n");
-  printf("\t          Version 0.0.4\n");
+  printf("\t          Version 0.1.0\n");
   printf("\tThis software is released under the\n");
   printf("\t           MIT License.\n\n");
   printf("\t                (C) 2024-2025 Tsugu\n\n");
@@ -158,7 +162,7 @@ int main()
   ifp = fopen("init.txt", "r"); /* 起動時に読み込む LISP プログラム */
   if (ifp == NULL)
   {
-    printf("\"init.txt\" is missing.\n");
+    printf("\"init.txt\" is missing. Please prepare an empty init.txt file.\n");
     return 0;
   }
   err = off;
