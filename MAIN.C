@@ -95,12 +95,14 @@ void initCells()
   gc_addFunc("atom", gc_atom_f);
   gc_addFunc("eq", gc_eq_f);
   gc_addFunc("de", gc_de_f);
-  gc_addFunc("setq", gc_setq_f);   /* 値を評価してそれぞれ変数に代入 */
-  gc_addFunc("psetq", gc_psetq_f); /* 値を一括評価後、各変数に代入 */
-  gc_addFunc("gc", gc_f);          /* ガベージ・コレクション */
-  gc_addFunc("while", gc_while_f); /* 前置判定ループ */
-  gc_addFunc("until", gc_until_f); /* 否定的後置判定ループ */
-  gc_addFunc("quit", quit_f);      /* インタプリタを出る */
+  gc_addFunc("setq", gc_setq_f);     /* 値を評価してそれぞれ変数に代入 */
+  gc_addFunc("psetq", gc_psetq_f);   /* 値を一括評価後、各変数に代入 */
+  gc_addFunc("gc", gc_f);            /* ガベージ・コレクション */
+  gc_addFunc("while", gc_while_f);   /* 前置判定ループ */
+  gc_addFunc("until", gc_until_f);   /* 否定的後置判定ループ */
+  gc_addFunc("rplaca", gc_rplaca_f); /* リスト先頭の cdr を書き換える */
+  gc_addFunc("rplacd", gc_rplacd_f); /* リスト先頭の cdr を書き換える */
+  gc_addFunc("quit", quit_f);        /* インタプリタを出る */
 }
 
 void top_loop()
@@ -137,7 +139,7 @@ void greeting()
   printf("\n");
   printf("\t       Pure LISP Interpreter\n\n");
   printf("\t         p u r e  L I S P\n\n");
-  printf("\t          Version 0.1.0\n");
+  printf("\t          Version 0.2.0\n");
   printf("\tThis software is released under the\n");
   printf("\t           MIT License.\n\n");
   printf("\t                (C) 2024-2025 Tsugu\n\n");

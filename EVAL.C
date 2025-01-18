@@ -302,6 +302,21 @@ Index gc_cdr_f(Index args, Index env)
   return cdr(car(args));
 }
 
+Index gc_cons_f(Index args, Index env)
+{
+  Index indx;
+
+  args = gc_eval_args(args, env);
+  ec;
+  if (!is(args, CELL) || !is(cdr(args), CELL))
+    return error("Not enough arguments.");
+  indx = gc_getFreeCell();
+  ec;
+  car(indx) = car(args);
+  cdr(indx) = car(cdr(args));
+  return indx;
+}
+
 Index gc_atom_f(Index args, Index env)
 {
   args = gc_eval_args(args, env);
@@ -322,21 +337,6 @@ Index gc_eq_f(Index args, Index env)
   if (car(args) == car(cdr(args)))
     return 1;
   return 0;
-}
-
-Index gc_cons_f(Index args, Index env)
-{
-  Index indx;
-
-  args = gc_eval_args(args, env);
-  ec;
-  if (!is(args, CELL) || !is(cdr(args), CELL))
-    return error("Not enough arguments.");
-  indx = gc_getFreeCell();
-  ec;
-  car(indx) = car(args);
-  cdr(indx) = car(cdr(args));
-  return indx;
 }
 
 Index gc_cond_f(Index clauses, Index env)
@@ -552,6 +552,32 @@ Index gc_until_f(Index args, Index env)
   } while (!flag);
   pop();
   return result;
+}
+
+/* (rplaca '(x.y) a) = (a.y) */
+Index gc_rplaca_f(Index args, Index env)
+{
+  args = gc_eval_args(args, env);
+  ec;
+  if (!is(args, CELL))
+    return error("Not enough arguments.");
+  if (!is(car(args), CELL))
+    return error("The first argument is not a cell.");
+  car(car(args)) = car(cdr(args));
+  return car(args);
+}
+
+/* (rplacd '(x.y) a) = (x.a) */
+Index gc_rplacd_f(Index args, Index env)
+{
+  args = gc_eval_args(args, env);
+  ec;
+  if (!is(args, CELL))
+    return error("Not enough arguments.");
+  if (!is(car(args), CELL))
+    return error("The first argument is not a cell.");
+  cdr(car(args)) = car(cdr(args));
+  return car(args);
 }
 
 Index quit_f(Index args, Index env)

@@ -103,4 +103,6 @@ Index gc_psetq_f(Index, Index);
 Index gc_f(Index, Index);
 Index gc_while_f(Index, Index);
 Index gc_until_f(Index, Index);
+Index gc_rplaca_f(Index, Index);
+Index gc_rplacd_f(Index, Index);
 Index quit_f(Index, Index);
