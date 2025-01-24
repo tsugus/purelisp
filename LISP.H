@@ -79,7 +79,6 @@ void printS(Index);
 Index error(char *);
 Index gc_strToName(char *);
 void nameToStr(Index, char *);
-int isCell(Index);
 Index gc_makeSymbol(char *);
 Index gc_getFreeCell();
 Index addSymbol(int, Index);

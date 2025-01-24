@@ -189,6 +189,18 @@ Index gc_eval(Index form, Index env)
   case CELL:
     head = car(form);
     args = cdr(form);
+    if (searchAssoc(head, &val, env)) /* 環境リストに head があるとき */
+    {
+      head = gc_cloneS(val); /* lambda 式の場合も考慮してコピー */
+      car(form) = head;
+      if (is(head, CELL) && car(head) == 2) /* lambda */
+      {
+        if (!is(cdr(head), CELL))
+          error("Not enough arguments");
+        form = gc_lambda(form, env);
+        break;
+      }
+    }
     if (!is(car(form), CELL))
     {
       if (is(head, SYMBOL))
@@ -227,7 +239,7 @@ Index gc_eval(Index form, Index env)
     if (searchAssoc(form, &val, env)) /* 環境リストに form があるとき */
       form = val;
     else
-      /* アトムの値への自動置き換え */
+      /* シンボルを値へ自動置き換え */
       if (!is(car(cdr(form)), POINTER))
         form = car(cdr(form));
     break;

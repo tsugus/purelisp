@@ -1,5 +1,5 @@
 ; (C) 2024-2025 Tsugu
-; Version 0.2.0
+; Version 0.2.1
 
 ; -------------------------------------
 ; Basic Functions
@@ -27,9 +27,9 @@
   (eq x '()))
 
 (de and (x y)
-  (cond (x (cond (y 't)
-                 ('t '())))
-        ('t '())))
+  (cond ((null x) '())
+        ('t (cond (y 't)
+                  ('t '())))))
 
 (de not (x)
   (cond (x '())
@@ -89,6 +89,8 @@
       ((eq (car e) 'setq) (envset (cadr e)
                                   (eval_ (caddr e) a) a))
       ((eq (car e) 'while) (while (eval_ (cadr e) a)
+                                  (evals (cddr e) a)))
+      ((eq (car e) 'until) (until (eval_ (cadr e) a)
                                   (evals (cddr e) a)))
       ((eq (car e) 'rplaca) (rplaca (eval_ (cadr e) a)
                                     (eval_ (caddr e) a)))
