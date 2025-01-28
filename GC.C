@@ -64,7 +64,7 @@ Index purseAtom(Index indx)
     purseSymbol(indx);
     ec;
     nameToStr(car(indx), namebuf);
-    /* シンボルテーブルの検索（機能が gc_getSymbol と重複している！！） */
+    /* シンボルテーブルの検索（機能が gc_getSymbol と重複している！） */
     hash_n = hash(namebuf);
     symbol = symbol_table[hash_n];
     while (symbol)
@@ -129,9 +129,8 @@ void mark_and_sweep()
     symbol_table[i] = 0;
   /* S-式をたどって ID がマイナスのセルを取り除く */
   /* 同時に、空にしたテーブルにシンボルを追加し直す */
-  purseS(1);
-  purseS(2);
-  purseS(3);
+  for (i = 0; i < 6; i++)
+    purseS(i);
   for (i = 0; i < sp; i++)
     purseS(stack[i]);
   /* タグの ID がマイナスのセルをフリーセルに戻す */

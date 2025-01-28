@@ -1,5 +1,5 @@
 ; (C) 2024-2025 Tsugu
-; Version 0.2.1
+; Version 0.3.0
 
 ; -------------------------------------
 ; Basic Functions
@@ -30,6 +30,11 @@
   (cond ((null x) '())
         ('t (cond (y 't)
                   ('t '())))))
+
+(de or (x y)
+  (cond (x 't)
+        ('t (cond ((null y) '())
+                  ('t 't)))))
 
 (de not (x)
   (cond (x '())
@@ -182,7 +187,7 @@
         (setq l (cdr l))
         acc))
     '()))
-  '(1 2 3 4 5 6 7 8 9 10)
+  '(1 2 3 4 5 6 7)
 ) '())
 
 (eval_ '(
@@ -204,7 +209,59 @@
       x)
     )
   )
-  '(1 2 3 4 5 6 7 8 9) '(10)
+  '(1 2 3 4 5) '(6 7)
 ) '())
 
 ; -------------------------------
+
+(de append_rec (l m)
+  (cond ((null l) m)
+        ('t (cons (car l)
+                  (append_rec (cdr l) m)))))
+
+(append_rec '(1 2 3) '(4 5))
+
+(de append_cont (l m cont)
+  (cond
+    ((null l) (funcall cont m))
+    ('t (append_cont (cdr l) m
+      #'(lambda (x) (funcall cont (cons (car l) x)))))))
+
+(append_cont '(1 2 3) '(4 5) #'(lambda (x) x))
+
+(de append_loop (l m cont)
+  (while l
+    (setq cont #'(lambda (x) (funcall cont (cons (car l) x))))
+    (setq l (cdr l)))
+  (funcall cont m))
+
+(append_loop '(1 2 3) '(4 5) #'(lambda (x) x))
+
+(de fibo_rec (l)
+  (cond
+    ((null (cdr l)) l)
+    ('t  (cons (fibo_rec (cdr l)) (fibo_rec (cddr l))))))
+
+(fibo_rec '(1 1 1 1 1) #'(lambda (x) x))
+
+(de fibo_cont (l cont)
+  (cond
+    ((null (cdr l)) (funcall cont l))
+    ('t
+      (fibo_cont (cdr l)
+        #'(lambda (x)
+          (fibo_cont (cddr l)
+            #'(lambda (y) (funcall cont (cons x y)))))))))
+
+(fibo_cont '(1 1 1 1 1) #'(lambda (x) x))
+
+(de fibo_loop (l cont)
+  (while (cdr l)
+    (setq cont
+      #'(lambda (x)
+        (fibo_loop (cddr l)
+          #'(lambda (y) (funcall cont (cons x y))))))
+    (setq l (cdr l)))
+  (funcall cont l))
+
+(fibo_loop '(1 1 1 1 1) #'(lambda (x) x))

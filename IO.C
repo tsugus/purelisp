@@ -188,30 +188,36 @@ void printSymbol(Index atom)
   printf("%s", namebuf);
 }
 
+Index gc_makeatom_sub(char *str)
+{
+  Index cell, cell2;
+  char *txtp2;
+
+  cell = gc_getFreeCell();
+  ec;
+  push(cell);
+  ec;
+  cell2 = gc_getFreeCell();
+  ec;
+  txtp2 = txtp;
+  txtp = str; /* 末尾にスペースが必要 */
+  car(cell) = gc_getSymbol();
+  ec;
+  txtp = ++txtp2;
+  car(cell2) = gc_readS(0);
+  ec;
+  cdr(cell) = cell2;
+  pop();
+  return cell;
+}
+
 Index gc_makeAtom()
 {
   if (*txtp == '\'')
-  {
-    Index cell, cell2;
-    char *txtp2;
+    return gc_makeatom_sub("quote ");
 
-    cell = gc_getFreeCell();
-    ec;
-    push(cell);
-    ec;
-    cell2 = gc_getFreeCell();
-    ec;
-    txtp2 = txtp;
-    txtp = "quote "; /* 末尾にスペースが必要 */
-    car(cell) = gc_getSymbol();
-    ec;
-    txtp = ++txtp2;
-    car(cell2) = gc_readS(0);
-    ec;
-    cdr(cell) = cell2;
-    pop();
-    return cell;
-  }
+  if (*txtp == '#' && *(++txtp) == '\'')
+    return gc_makeatom_sub("function ");
 
   return gc_getSymbol();
 }

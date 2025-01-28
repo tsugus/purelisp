@@ -25,10 +25,15 @@
 
 enum ID
 {
+  /* アトム用 */
   NIL,
-  CELL,
   SYMBOL, /* ただし NIL を含まない */
-  POINTER /* C の関数ポインタ */
+  /* セル用 */
+  CELL,
+  POINTER, /* C の関数ポインタ */
+  /* アトムの cdr 用 */
+  ARGsEVAL,   /* 関数の引数を評価する */
+  ARGsNotEVAL /* 関数の引数を評価しない */
 };
 
 enum ERROR_NUM
@@ -73,21 +78,29 @@ extern FILE *ifp;
 extern int sp; /* GC 用スタックポインタ */
 #endif
 
-Index gc_readS(int);
+/* From "MAIN.C" */
 void initCells();
-void printS(Index);
+/* From "IO.C" */
 Index error(char *);
+Index gc_getFreeCell();
 Index gc_strToName(char *);
 void nameToStr(Index, char *);
 Index gc_makeSymbol(char *);
-Index gc_getFreeCell();
 Index addSymbol(int, Index);
 int hash(char *);
-Index purseS(Index);
-Index gc_eval(Index, Index);
+Index gc_readS(int);
+void printS(Index);
+/* From "GC.C" */
 Index push(Index);
 Index pop();
-
+Index purseS(Index);
+/* From "EVAL.C" */
+Index gc_eval_args(Index, Index);
+Index gc_cloneS(Index);
+Index gc_apply(Index, Index, Index);
+Index gc_eval(Index, Index);
+Index getFromOblist(Index);
+/* From "FUNC.C" */
 Index gc_eval_f(Index, Index);
 Index quote_f(Index, Index);
 Index gc_car_f(Index, Index);
@@ -97,6 +110,7 @@ Index gc_cond_f(Index, Index);
 Index gc_atom_f(Index, Index);
 Index gc_eq_f(Index, Index);
 Index gc_de_f(Index, Index);
+Index gc_df_f(Index, Index);
 Index gc_setq_f(Index, Index);
 Index gc_psetq_f(Index, Index);
 Index gc_f(Index, Index);
@@ -104,4 +118,6 @@ Index gc_while_f(Index, Index);
 Index gc_until_f(Index, Index);
 Index gc_rplaca_f(Index, Index);
 Index gc_rplacd_f(Index, Index);
+Index gc_function_f(Index, Index);
+Index gc_funcall_f(Index, Index);
 Index quit_f(Index, Index);

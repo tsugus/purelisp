@@ -32,7 +32,7 @@ void gc_addSystemSymbol(Index n, char *name)
   addSymbol(hash(name), n);
 }
 
-void gc_addFunc(char *name, Index (*func)(Index, Index))
+void gc_addFunc(char *name, Index (*func)(Index, Index), enum ID id)
 {
   Index f, cell;
 
@@ -42,10 +42,11 @@ void gc_addFunc(char *name, Index (*func)(Index, Index))
   car(cdr(f)) = gc_getFreeCell();
   p_f(car(cdr(f))) = func;
   tag(car(cdr(f))) = POINTER;
+  tag(cdr(f)) = id;
   /* oblist に登録 */
   cell = gc_getFreeCell();
-  cdr(cell) = car(cdr(3));
-  car(cdr(3)) = cell;
+  cdr(cell) = car(cdr(4));
+  car(cdr(4)) = cell;
   car(cell) = f;
 }
 
@@ -69,7 +70,7 @@ void initCells()
     symbol_table[i] = 0;
 
   /* フリーセルの先頭位置の初期化 */
-  freecells = 4; /* 0 ~ 3 は予約済み */
+  freecells = 6; /* 0 ~ 5 は予約済み */
 
   /* sp の初期化 */
   sp = 0; /* GC 用スタックポインタ */
@@ -82,27 +83,32 @@ void initCells()
   /* システム・シンボルの登録 */
   gc_addSystemSymbol(1, "t");
   gc_addSystemSymbol(2, "lambda");
-  gc_addSystemSymbol(3, "oblist");
-  car(cdr(3)) = 0;
+  gc_addSystemSymbol(3, "nlambda");
+  gc_addSystemSymbol(4, "oblist");
+  car(cdr(4)) = 0;
+  gc_addSystemSymbol(5, "funarg");
 
   /* 基本関数の登録 */
-  gc_addFunc("eval", gc_eval_f);
-  gc_addFunc("quote", quote_f);
-  gc_addFunc("car", gc_car_f);
-  gc_addFunc("cdr", gc_cdr_f);
-  gc_addFunc("cons", gc_cons_f);
-  gc_addFunc("cond", gc_cond_f);
-  gc_addFunc("atom", gc_atom_f);
-  gc_addFunc("eq", gc_eq_f);
-  gc_addFunc("de", gc_de_f);
-  gc_addFunc("setq", gc_setq_f);     /* 値を評価してそれぞれ変数に代入 */
-  gc_addFunc("psetq", gc_psetq_f);   /* 値を一括評価後、各変数に代入 */
-  gc_addFunc("gc", gc_f);            /* ガベージ・コレクション */
-  gc_addFunc("while", gc_while_f);   /* 前置判定ループ */
-  gc_addFunc("until", gc_until_f);   /* 否定的後置判定ループ */
-  gc_addFunc("rplaca", gc_rplaca_f); /* リスト先頭の cdr を書き換える */
-  gc_addFunc("rplacd", gc_rplacd_f); /* リスト先頭の cdr を書き換える */
-  gc_addFunc("quit", quit_f);        /* インタプリタを出る */
+  gc_addFunc("eval", gc_eval_f, ARGsEVAL);
+  gc_addFunc("quote", quote_f, ARGsNotEVAL);
+  gc_addFunc("car", gc_car_f, ARGsEVAL);
+  gc_addFunc("cdr", gc_cdr_f, ARGsEVAL);
+  gc_addFunc("cons", gc_cons_f, ARGsEVAL);
+  gc_addFunc("cond", gc_cond_f, ARGsNotEVAL);
+  gc_addFunc("atom", gc_atom_f, ARGsEVAL);
+  gc_addFunc("eq", gc_eq_f, ARGsEVAL);
+  gc_addFunc("de", gc_de_f, ARGsNotEVAL);
+  gc_addFunc("df", gc_df_f, ARGsNotEVAL);
+  gc_addFunc("setq", gc_setq_f, ARGsNotEVAL);         /* 値を評価してそれぞれ変数に代入 */
+  gc_addFunc("psetq", gc_psetq_f, ARGsNotEVAL);       /* 値を一括評価後、各変数に代入 */
+  gc_addFunc("gc", gc_f, ARGsNotEVAL);                /* ガベージ・コレクション */
+  gc_addFunc("while", gc_while_f, ARGsNotEVAL);       /* 前置判定ループ */
+  gc_addFunc("until", gc_until_f, ARGsNotEVAL);       /* 否定的後置判定ループ */
+  gc_addFunc("rplaca", gc_rplaca_f, ARGsEVAL);        /* リスト先頭の cdr を書き換える */
+  gc_addFunc("rplacd", gc_rplacd_f, ARGsEVAL);        /* リスト先頭の cdr を書き換える */
+  gc_addFunc("function", gc_function_f, ARGsNotEVAL); /* funarg 式を作る */
+  gc_addFunc("funcall", gc_funcall_f, ARGsNotEVAL);   /* funarg 式を引数に適用する */
+  gc_addFunc("quit", quit_f, ARGsNotEVAL);            /* インタプリタを出る */
 }
 
 void top_loop()
@@ -139,7 +145,7 @@ void greeting()
   printf("\n");
   printf("\t       Pure LISP Interpreter\n\n");
   printf("\t         p u r e  L I S P\n\n");
-  printf("\t          Version 0.2.1\n");
+  printf("\t          Version 0.3.0\n");
   printf("\tThis software is released under the\n");
   printf("\t           MIT License.\n\n");
   printf("\t                (C) 2024-2025 Tsugu\n\n");
