@@ -382,3 +382,40 @@ Index quit_f(Index args, Index env)
   free(tags);
   exit(0);
 }
+
+Index gc_num_f(Index args, Index env)
+{
+  Index num, indx, result;
+  int i;
+
+  if (!is(car(args), SYMBOL))
+    error("An argument is not a symbol.");
+  nameToStr(car(car(args)), namebuf);
+  num = atoi(namebuf);
+  result = 0;
+  for (i = 0; i < num; i++)
+  {
+    indx = gc_getFreeCell();
+    ec;
+    car(indx) = 1;
+    cdr(indx) = result;
+    result = indx;
+  }
+  return result;
+}
+
+Index len_f(Index args, Index env)
+{
+  Index indx;
+  int i;
+
+  indx = car(args);
+  for (i = 0; indx; indx = cdr(indx))
+    if (i++ < 0)
+    {
+      error("Numeric overflow.");
+      ec;
+    }
+  sprintf(namebuf, "%d", i);
+  return gc_makeSymbol(namebuf);
+}

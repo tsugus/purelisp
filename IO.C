@@ -213,11 +213,16 @@ Index gc_makeatom_sub(char *str)
 
 Index gc_makeAtom()
 {
+  /* 省略記法 */
   if (*txtp == '\'')
     return gc_makeatom_sub("quote ");
-
-  if (*txtp == '#' && *(++txtp) == '\'')
+  if (*txtp == '#' && '0' <= *(txtp + 1) && *(txtp + 1) <= '9')
+    return gc_makeatom_sub("num ");
+  if (*txtp == '#' && *(txtp + 1) == '\'')
+  {
+    txtp++;
     return gc_makeatom_sub("function ");
+  }
 
   return gc_getSymbol();
 }

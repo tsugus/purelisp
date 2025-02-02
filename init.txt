@@ -1,5 +1,5 @@
 ; (C) 2024-2025 Tsugu
-; Version 0.3.0
+; Version 0.4.0
 
 ; -------------------------------------
 ; Basic Functions
@@ -44,8 +44,8 @@
   (lambda (acc)
     (while l
       (setq acc (cons (car l) acc))
-      (setq l (cdr l))
-      acc))
+      (setq l (cdr l)))
+    acc)
   '()))
 
 (de append (x y) (
@@ -65,8 +65,8 @@
         (while (and (not (atom x)) (not (atom y)))
           (setq acc (cons (cons (car x) (car y)) acc))
           (setq x (cdr x))
-          (setq y (cdr y))
-          acc))))
+          (setq y (cdr y)))))
+    acc)
   '()))
 
 (de assoc (x y)
@@ -140,8 +140,108 @@
     y)
   env))
 
+; -------------------------------
+
+(de append_rec (l m)
+  (cond ((null l) m)
+        ('t (cons (car l)
+                  (append_rec (cdr l) m)))))
+
+(de append_cont (l m cont)
+  (cond
+    ((null l) (funcall cont m))
+    ('t (append_cont (cdr l) m
+      #'(lambda (x) (funcall cont (cons (car l) x)))))))
+
+(de append_contloop (l m cont)
+  (while l
+    (setq cont #'(lambda (x) (funcall cont (cons (car l) x)))
+          l (cdr l)))
+  (funcall cont m))
+
+; -------------------------------
+
+(de add (x y)
+  (append x y))
+
+(de mult (x y) (
+  (lambda (z)
+    (while y
+      (psetq y (cdr y)
+             z (append x z))))
+  '()))
+
+(de sub (x y)
+  (while y
+    (psetq y (cdr y)
+           x (cdr x)))
+  x)
+
+(de div (x y) (
+  (lambda (z)
+    (while (sub (add x #1) y)
+      (psetq x (sub x y)
+             z (cons 't z))))
+  '()))
+
+(de mod (x y)
+    (while (sub (add x #1) y)
+      (setq x (sub x y))))
+
+
+(de f_list (f args) (
+  (lambda (r)
+    (setq args (cdr args))
+    (while args
+      (psetq args (cdr args)
+             r (funcall f r (car args)))))
+  (car args)))
+
+(de + args
+  (f_list 'append args)
+)
+
+(de * args
+  (f_list 'mult args)
+)
+
+(de - args
+  (f_list 'sub args)
+)
+
+(de / args
+  (f_list 'div args)
+)
+
+(de % args
+  (f_list 'mod args)
+)
+
+(de fibo_rec (n)
+  (cond
+    ((eq (- n #1) #0) #1)
+    ('t (+ (fibo_rec (- n #1)) (fibo_rec (- n #2))))))
+
+(de fibo_cont (n cont)
+  (cond
+    ((eq (- n #1) #0) (funcall cont #1))
+    ('t
+      (fibo_cont (- n #1)
+        #'(lambda (x)
+          (fibo_cont (- n #2)
+            #'(lambda (y) (funcall cont (+ x y)))))))))
+
+(de fibo_loop (n) (
+  (lambda (a1 a2)
+    (while n
+      (psetq n (- n #1)
+             a1 a2
+             a2 (+ a1 a2)))
+    a2)
+  #0 #1))
+
 ; -------------------------------------
-; Test of eval_
+; Test 1
 
 ; = a
 (eval_ 'x '((x.a) (y.b)))
@@ -206,62 +306,42 @@
             (setq l (cdr l))
             acc))
         '()))
-      x)
-    )
-  )
+      x)))
   '(1 2 3 4 5) '(6 7)
 ) '())
 
-; -------------------------------
+; -----------------------------
+; test 3
 
-(de append_rec (l m)
-  (cond ((null l) m)
-        ('t (cons (car l)
-                  (append_rec (cdr l) m)))))
+'append_rec
+(append_rec '(A B C D E) '(F G))
 
-(append_rec '(1 2 3) '(4 5))
+'append_cont
+(append_cont '(A B C D E) '(F G) #'(lambda (x) x))
 
-(de append_cont (l m cont)
-  (cond
-    ((null l) (funcall cont m))
-    ('t (append_cont (cdr l) m
-      #'(lambda (x) (funcall cont (cons (car l) x)))))))
+'append_contloop
+(append_contloop '(A B C D E) '(F G) #'(lambda (x) x))
 
-(append_cont '(1 2 3) '(4 5) #'(lambda (x) x))
+; -----------------------------
+; test 4
 
-(de append_loop (l m cont)
-  (while l
-    (setq cont #'(lambda (x) (funcall cont (cons (car l) x))))
-    (setq l (cdr l)))
-  (funcall cont m))
+'fibo_rec
+((lambda (i r)
+  (until (eq i #0)
+    (setq i (- i #1)
+          r (cons (len (fibo_rec i)) r)))
+) #7 #0)
 
-(append_loop '(1 2 3) '(4 5) #'(lambda (x) x))
+'fibo_cont
+((lambda (i r)
+  (until (eq i #0)
+    (setq i (- i #1)
+          r (cons (len (fibo_cont i #'(lambda (x) x))) r)))
+) #7 #0)
 
-(de fibo_rec (l)
-  (cond
-    ((null (cdr l)) l)
-    ('t  (cons (fibo_rec (cdr l)) (fibo_rec (cddr l))))))
-
-(fibo_rec '(1 1 1 1 1) #'(lambda (x) x))
-
-(de fibo_cont (l cont)
-  (cond
-    ((null (cdr l)) (funcall cont l))
-    ('t
-      (fibo_cont (cdr l)
-        #'(lambda (x)
-          (fibo_cont (cddr l)
-            #'(lambda (y) (funcall cont (cons x y)))))))))
-
-(fibo_cont '(1 1 1 1 1) #'(lambda (x) x))
-
-(de fibo_loop (l cont)
-  (while (cdr l)
-    (setq cont
-      #'(lambda (x)
-        (fibo_loop (cddr l)
-          #'(lambda (y) (funcall cont (cons x y))))))
-    (setq l (cdr l)))
-  (funcall cont l))
-
-(fibo_loop '(1 1 1 1 1) #'(lambda (x) x))
+'fibo_loop
+((lambda (i r)
+  (until (eq i #0)
+    (setq i (- i #1)
+          r (cons (len (fibo_loop i)) r)))
+) #7 #0)

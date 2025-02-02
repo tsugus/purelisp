@@ -10,7 +10,7 @@
 #define CELLS_SIZE 0x8000   /* セルの総数 */
 #define TEXTBUF_SIZE 100    /* 入力テキスト用バッファ */
 #define SYMBOLTABLE_SIZE 64 /* シンボルを割り振るハッシュテーブルのサイズ */
-#define STACK_SIZE 0x1000   /* GC 用スタックのサイズ */
+#define STACK_SIZE 0x500    /* GC 用スタックのサイズ */
 #define tag(x) (tags[x])    /* ID を格納するタグ */
 #define car(x) (cells[x].pair.car).index
 #define cdr(x) (cells[x].pair.cdr).index
@@ -121,3 +121,5 @@ Index gc_rplacd_f(Index, Index);
 Index gc_function_f(Index, Index);
 Index gc_funcall_f(Index, Index);
 Index quit_f(Index, Index);
+Index gc_num_f(Index, Index);
+Index len_f(Index, Index);

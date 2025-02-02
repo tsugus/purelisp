@@ -109,6 +109,8 @@ void initCells()
   gc_addFunc("function", gc_function_f, ARGsNotEVAL); /* funarg 式を作る */
   gc_addFunc("funcall", gc_funcall_f, ARGsNotEVAL);   /* funarg 式を引数に適用する */
   gc_addFunc("quit", quit_f, ARGsNotEVAL);            /* インタプリタを出る */
+  gc_addFunc("num", gc_num_f, ARGsNotEVAL);           /* チャーチ数に変換 */
+  gc_addFunc("len", len_f, ARGsEVAL);                 /* リストの長さを返す */
 }
 
 void top_loop()
@@ -145,7 +147,7 @@ void greeting()
   printf("\n");
   printf("\t       Pure LISP Interpreter\n\n");
   printf("\t         p u r e  L I S P\n\n");
-  printf("\t          Version 0.3.1\n");
+  printf("\t          Version 0.4.0\n");
   printf("\tThis software is released under the\n");
   printf("\t           MIT License.\n\n");
   printf("\t                (C) 2024-2025 Tsugu\n\n");
