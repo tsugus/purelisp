@@ -7,10 +7,10 @@
 /*                 (C) 2024-2025 Tsugu */
 /*                                     */
 
-#define CELLS_SIZE 0x8000   /* セルの総数 */
+#define CELLS_SIZE 0x10000  /* セルの総数 */
 #define TEXTBUF_SIZE 100    /* 入力テキスト用バッファ */
 #define SYMBOLTABLE_SIZE 64 /* シンボルを割り振るハッシュテーブルのサイズ */
-#define STACK_SIZE 0x500    /* GC 用スタックのサイズ */
+#define STACK_SIZE 0x1000   /* GC 用スタックのサイズ */
 #define tag(x) (tags[x])    /* ID を格納するタグ */
 #define car(x) (cells[x].pair.car).index
 #define cdr(x) (cells[x].pair.cdr).index
@@ -32,8 +32,8 @@ enum ID
   CELL,
   POINTER, /* C の関数ポインタ */
   /* アトムの cdr 用 */
-  ARGsEVAL,   /* 関数の引数を評価する */
-  ARGsNotEVAL /* 関数の引数を評価しない */
+  ARGsEVAL,    /* 関数の引数を評価する */
+  ARGsNotEVAL, /* 関数の引数を評価しない */
 };
 
 enum ERROR_NUM
@@ -100,6 +100,8 @@ Index gc_cloneS(Index);
 Index gc_apply(Index, Index, Index);
 Index gc_eval(Index, Index);
 Index getFromOblist(Index);
+Index gc_bqev(Index, Index);
+Index gc_bqapnd(Index, Index);
 /* From "FUNC.C" */
 Index gc_eval_f(Index, Index);
 Index quote_f(Index, Index);
@@ -120,6 +122,11 @@ Index gc_rplaca_f(Index, Index);
 Index gc_rplacd_f(Index, Index);
 Index gc_function_f(Index, Index);
 Index gc_funcall_f(Index, Index);
+Index gc_dm_f(Index, Index);
+Index gc_backquote_f(Index, Index);
+Index comma_f(Index, Index);
+Index atmark_f(Index, Index);
+Index gc_gensym_f(Index, Index);
 Index quit_f(Index, Index);
 Index gc_num_f(Index, Index);
 Index len_f(Index, Index);

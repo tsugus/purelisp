@@ -50,6 +50,17 @@ void gc_addFunc(char *name, Index (*func)(Index, Index), enum ID id)
   car(cell) = f;
 }
 
+void gc_addDummyFunc(Index indx, Index (*func)(Index, Index), enum ID id)
+{
+  Index cell;
+
+  tag(indx) = SYMBOL;
+  car(cdr(indx)) = gc_getFreeCell();
+  p_f(car(cdr(indx))) = func;
+  tag(car(cdr(indx))) = POINTER;
+  tag(cdr(indx)) = id;
+}
+
 void initCells()
 {
   Index indx;
@@ -70,7 +81,7 @@ void initCells()
     symbol_table[i] = 0;
 
   /* フリーセルの先頭位置の初期化 */
-  freecells = 6; /* 0 ~ 5 は予約済み */
+  freecells = 9; /* 0 ~ 8 は予約済み */
 
   /* sp の初期化 */
   sp = 0; /* GC 用スタックポインタ */
@@ -87,6 +98,9 @@ void initCells()
   gc_addSystemSymbol(4, "oblist");
   car(cdr(4)) = 0;
   gc_addSystemSymbol(5, "funarg");
+  gc_addSystemSymbol(6, "macro");
+  gc_addSystemSymbol(7, "comma");
+  gc_addSystemSymbol(8, "atmark");
 
   /* 基本関数の登録 */
   gc_addFunc("eval", gc_eval_f, ARGsEVAL);
@@ -108,9 +122,14 @@ void initCells()
   gc_addFunc("rplacd", gc_rplacd_f, ARGsEVAL);        /* リスト先頭の cdr を書き換える */
   gc_addFunc("function", gc_function_f, ARGsNotEVAL); /* funarg 式を作る */
   gc_addFunc("funcall", gc_funcall_f, ARGsNotEVAL);   /* funarg 式を引数に適用する */
-  gc_addFunc("quit", quit_f, ARGsNotEVAL);            /* インタプリタを出る */
-  gc_addFunc("num", gc_num_f, ARGsNotEVAL);           /* チャーチ数に変換 */
-  gc_addFunc("len", len_f, ARGsEVAL);                 /* リストの長さを返す */
+  gc_addFunc("dm", gc_dm_f, ARGsNotEVAL);
+  gc_addFunc("backquote", gc_backquote_f, ARGsNotEVAL);
+  gc_addDummyFunc(7, comma_f, ARGsNotEVAL);       /* comma (ダミー関数) */
+  gc_addDummyFunc(8, atmark_f, ARGsNotEVAL);      /* atmark (ダミー関数) */
+  gc_addFunc("gensym", gc_gensym_f, ARGsNotEVAL); /* 変数の自動生成 */
+  gc_addFunc("quit", quit_f, ARGsNotEVAL);        /* インタプリタを出る */
+  gc_addFunc("num", gc_num_f, ARGsNotEVAL);       /* チャーチ数に変換 */
+  gc_addFunc("len", len_f, ARGsEVAL);             /* リストの長さを返す */
 }
 
 void top_loop()
@@ -145,9 +164,9 @@ void top_loop()
 void greeting()
 {
   printf("\n");
-  printf("\t       Pure LISP Interpreter\n\n");
+  printf("\t     An pure LISP Interpreter\n\n");
   printf("\t         p u r e  L I S P\n\n");
-  printf("\t          Version 0.4.0\n");
+  printf("\t          Version 0.5.0\n");
   printf("\tThis software is released under the\n");
   printf("\t           MIT License.\n\n");
   printf("\t                (C) 2024-2025 Tsugu\n\n");

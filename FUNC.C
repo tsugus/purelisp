@@ -376,6 +376,79 @@ Index gc_funcall_f(Index args, Index env)
   return gc_apply(func, args, env);
 }
 
+Index gc_dm_f(Index args, Index env)
+{
+  Index mac, form;
+
+  if (!is(args, CELL) || !is(cdr(args), CELL))
+    return error("Not enough arguments.");
+  mac = car(args);
+  if (!is(mac, SYMBOL))
+    return error("The first item in the list is not a symbol.");
+  form = gc_getFreeCell();
+  ec;
+  push(form);
+  ec;
+  car(form) = 6; /* シンボル macro の記憶位置を代入 */
+  cdr(form) = cdr(args);
+  car(cdr(mac)) = form;
+  tag(car(cdr(mac))) = CELL;
+  /* oblist への追加 */
+  if (!getFromOblist(mac)) /* すでにあるか検索 */
+  {
+    Index cell = gc_getFreeCell();
+
+    cdr(cell) = car(cdr(4)); /* oblist のインデックスは 4 */
+    car(cdr(4)) = cell;      /* リストそのものはシンボル oblist の内部にある */
+    car(cell) = mac;
+  }
+  pop();
+  return mac;
+}
+
+Index gc_backquote_f(Index args, Index env)
+{
+  if (!is(args, CELL))
+    return error("The backquote statement is invalid.");
+  args = car(args);
+  if (!is(args, CELL))
+    return args;
+  else if (car(args) == 7) /* comma */
+    return gc_bqev(car(cdr(args)), env);
+  else if (car(args) == 8) /* atmark */
+    return error("The backquote statement is invalid.");
+  else
+    return gc_bqapnd(args, env);
+}
+
+Index comma_f(Index args, Index env) /* エラーを表示させるためだけ */
+{
+  return error("The backquote statement is invalid.");
+}
+
+Index atmark_f(Index args, Index env) /* エラーを表示させるためだけ */
+{
+  return error("The backquote statement is invalid.");
+}
+
+Index gc_gensym_f(Index args, Index env)
+{
+  static int i = 0;
+  Index indx;
+
+  indx = gc_getFreeCell();
+  ec;
+  push(indx);
+  sprintf(namebuf, "$%03d", i);
+  car(indx) = gc_strToName(namebuf);
+  cdr(indx) = gc_getFreeCell();
+  cdr(cdr(indx)) = 0;
+  tag(indx) = SYMBOL;
+  if (++i > 999)
+    i = 0;
+  return indx;
+}
+
 Index quit_f(Index args, Index env)
 {
   free(cells);
@@ -412,10 +485,7 @@ Index len_f(Index args, Index env)
   indx = car(args);
   for (i = 0; indx; indx = cdr(indx))
     if (i++ < 0)
-    {
-      error("Numeric overflow.");
-      ec;
-    }
+      return error("Numeric overflow.");
   sprintf(namebuf, "%d", i);
   return gc_makeSymbol(namebuf);
 }

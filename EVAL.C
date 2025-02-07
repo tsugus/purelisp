@@ -75,7 +75,7 @@ Index gc_lambda(Index head, Index args, Index env)
   Index formal_args, S, actual_args, key, value, result;
 
   if (is(car(head), CELL) || !is(cdr(head), CELL))
-    error("Not enough arguments.");
+    return error("Not enough arguments.");
   formal_args = car(cdr(head));
   S = cdr(cdr(head));
   actual_args = args;
@@ -172,7 +172,7 @@ Index gc_cloneS(Index indx)
   }
 }
 
-/* ラムダ項を引数に適用 */
+/* ラムダ項（nlambda, funsrg, macro を含む）を引数に適用 */
 Index gc_apply_lambda(Index func, Index args, Index env)
 {
   Index result;
@@ -184,19 +184,26 @@ Index gc_apply_lambda(Index func, Index args, Index env)
   case 2: /* lambda */
   case 3: /* nlambda */
     if (!is(cdr(func), CELL))
-      error("Not enough arguments");
+      return error("Not enough arguments");
     result = gc_lambda(func, args, env);
     ec;
     break;
   case 5: /* funarg */
     if (!is(cdr(func), CELL))
-      error("Not enough arguments");
+      return error("Not enough arguments");
     result = gc_lambda(car(cdr(func)), args, car(cdr(cdr(func))));
     ec;
     break;
+  case 6: /* macro */
+    if (!is(cdr(func), CELL))
+      return error("Not enough arguments");
+    result = gc_lambda(func, args, env);
+    ec;
+    result = gc_eval(result, env);
+    ec;
+    break;
   default:
-    error("The first item in the list is an invalid form.");
-    result = 0;
+    return error("The first item in the list is an invalid form.");
   }
   pop();
   pop();
@@ -224,7 +231,7 @@ Index gc_apply(Index func, Index args, Index env)
       ec;
       break;
     default:
-      error("There is no function difinition.");
+      return error("There is no function difinition.");
     }
     break;
   case CELL:
@@ -232,10 +239,8 @@ Index gc_apply(Index func, Index args, Index env)
     ec;
     break;
   default:
-    error("The first item in the list is not a function.");
-    result = 0;
+    return error("The first item in the list is not a function.");
   }
-
   return result;
 }
 
@@ -303,4 +308,149 @@ Index getFromOblist(Index symbol)
     cell = cdr(cell);
   }
   return 0;
+}
+
+Index gc_bqev(Index args, Index env)
+{
+  Index indx;
+
+  if (!is(args, CELL))
+    return gc_eval(args, env);
+  else
+  {
+    indx = gc_bqapnd(args, env);
+    ec;
+    return gc_eval(indx, env);
+  }
+}
+
+Index gc_bqev2(Index args, Index env)
+{
+  Index indx;
+
+  args = gc_bqev(args, env);
+  ec;
+  if (!args)
+    return 0;
+  if (!is(args, CELL))
+    return error("Not enough arguments.");
+  indx = gc_getFreeCell();
+  ec;
+  push(indx);
+  for (;;)
+  {
+    car(indx) = car(args);
+    if (!is(cdr(args), CELL))
+      break;
+    cdr(indx) = gc_getFreeCell();
+    ec;
+    indx = cdr(indx);
+    args = cdr(args);
+  }
+  return pop();
+}
+
+Index gc_bqapnd(Index args, Index env)
+{
+  Index indx, indx2;
+  int indxp;
+
+  push(0); /* ダミー */
+  indxp = sp - 1;
+  for (;; args = cdr(args))
+  {
+    if (is(car(args), CELL))
+    {
+      if (car(car(args)) == 8) /* atmark */
+      {
+        stack[indxp] = indx = gc_bqev2(car(cdr(car(args))), env);
+        ec;
+        if (!indx) /* @() */
+          continue;
+        else
+          while (is(cdr(indx), CELL))
+            indx = cdr(indx);
+      }
+      else if (car(car(args)) == 7) /* comma */
+      {
+        stack[indxp] = indx = gc_getFreeCell();
+        ec;
+        car(indx) = gc_bqev(car(cdr(car(args))), env);
+        ec;
+      }
+      else
+      {
+        stack[indxp] = indx = gc_getFreeCell();
+        ec;
+        car(indx) = gc_bqapnd(car(args), env);
+        ec;
+      }
+    }
+    else
+    {
+      stack[indxp] = indx = gc_getFreeCell();
+      ec;
+      car(indx) = car(args);
+    }
+    break;
+  }
+  for (args = cdr(args);; args = cdr(args))
+  {
+    /* ドット対 */
+    if (!is(args, CELL))
+    {
+      cdr(indx) = args;
+      return pop();
+    }
+    else if (car(args) == 7) /* comma */
+    {
+      cdr(indx) = gc_bqev(cdr(args), env);
+      return pop();
+    }
+    else if (car(args) == 8) /* atmark */
+      return error("The backquote statement is invalid.");
+    if (is(car(args), CELL))
+    {
+      /* ,@ */
+      if (car(car(args)) == 8)
+      {
+        cdr(indx) = gc_bqev2(car(cdr(car(args))), env);
+        ec;
+        while (is(cdr(indx), CELL))
+          indx = cdr(indx);
+      }
+      /* , */
+      else if (car(car(args)) == 7)
+      {
+        indx2 = gc_getFreeCell();
+        ec;
+        push(indx2);
+        car(indx2) = gc_bqev(car(cdr(car(args))), env);
+        ec;
+        cdr(indx) = indx2;
+        indx = cdr(indx);
+        pop();
+      }
+      else
+      {
+        indx2 = gc_getFreeCell();
+        ec;
+        push(indx2);
+        car(indx2) = gc_bqapnd(car(args), env);
+        ec;
+        cdr(indx) = indx2;
+        indx = cdr(indx);
+        pop();
+      }
+    }
+    /* シンボル */
+    else
+    {
+      indx2 = gc_getFreeCell();
+      ec;
+      car(indx2) = car(args);
+      cdr(indx) = indx2;
+      indx = cdr(indx);
+    }
+  }
 }

@@ -129,7 +129,7 @@ void mark_and_sweep()
     symbol_table[i] = 0;
   /* S-式をたどって ID がマイナスのセルを取り除く */
   /* 同時に、空にしたテーブルにシンボルを追加し直す */
-  for (i = 0; i < 6; i++)
+  for (i = 0; i < 9; i++) /* 0 から 8 は予約シンボルのインデックス */
     purseS(i);
   for (i = 0; i < sp; i++)
     purseS(stack[i]);

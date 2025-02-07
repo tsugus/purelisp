@@ -1,5 +1,6 @@
+;;;;; An Initial Program for "pure LISP" ;;;;;;
+; Version 0.5.0
 ; (C) 2024-2025 Tsugu
-; Version 0.4.0
 
 ; -------------------------------------
 ; Basic Functions
@@ -40,24 +41,24 @@
   (cond (x '())
         ('t 't)))
 
-(de reverse (l) (
-  (lambda (acc)
+(de reverse (l)
+  ((lambda (acc)
     (while l
       (setq acc (cons (car l) acc))
       (setq l (cdr l)))
     acc)
   '()))
 
-(de append (x y) (
-  (lambda (x)
+(de append (x y)
+  ((lambda (x)
     (while (not (atom x))
       (setq y (cons (car x) y))
       (setq x (cdr x)))
     y)
   (reverse x)))
 
-(de pair (x y) (
-  (lambda (acc)
+(de pair (x y)
+  ((lambda (acc)
     (cond
       ((and (null x) (null y))
         '())
@@ -110,12 +111,12 @@
         (append (pair (cadar e) (evlis (cdr e) a)) a)))))
 
 (de evcon (c a)
-    (while (and c (not (eval_ (caar c) a)))
-      (setq c (cdr c)))
-    (evals (cdar c) a))
+  (while (and c (not (eval_ (caar c) a)))
+    (setq c (cdr c)))
+  (evals (cdar c) a))
 
-(de evlis (m a) (
-  (lambda (m acc)
+(de evlis (m a)
+  ((lambda (m acc)
     (while m
       (setq acc (cons (eval_ (car m) a) acc))
       (setq m (cdr m)))
@@ -123,8 +124,8 @@
   (reverse m) '()))
 
 ; Sequential evaluation of the elements of a list
-(de evals (l env) (
-  (lambda (rslt)
+(de evals (l env)
+  ((lambda (rslt)
     (while l
       (setq rslt (eval_ (car l) env))
       (setq l (cdr l))
@@ -132,8 +133,8 @@
   '()))
 
 ; In an environment list, set y at x.
-(de envset (x y env) (
-  (lambda (l)
+(de envset (x y env)
+  ((lambda (l)
     (while (and l (not (eq x (caar l))))
       (setq l (cdr l)))
     (cond (l (rplacd (car l) y)))
@@ -142,30 +143,11 @@
 
 ; -------------------------------
 
-(de append_rec (l m)
-  (cond ((null l) m)
-        ('t (cons (car l)
-                  (append_rec (cdr l) m)))))
-
-(de append_cont (l m cont)
-  (cond
-    ((null l) (funcall cont m))
-    ('t (append_cont (cdr l) m
-      #'(lambda (x) (funcall cont (cons (car l) x)))))))
-
-(de append_contloop (l m cont)
-  (while l
-    (setq cont #'(lambda (x) (funcall cont (cons (car l) x)))
-          l (cdr l)))
-  (funcall cont m))
-
-; -------------------------------
-
 (de add (x y)
   (append x y))
 
-(de mult (x y) (
-  (lambda (z)
+(de mult (x y)
+  ((lambda (z)
     (while y
       (psetq y (cdr y)
              z (append x z))))
@@ -177,8 +159,8 @@
            x (cdr x)))
   x)
 
-(de div (x y) (
-  (lambda (z)
+(de div (x y)
+  ((lambda (z)
     (while (sub (add x #1) y)
       (psetq x (sub x y)
              z (cons 't z))))
@@ -188,9 +170,8 @@
     (while (sub (add x #1) y)
       (setq x (sub x y))))
 
-
-(de f_list (f args) (
-  (lambda (r)
+(de f_list (f args)
+  ((lambda (r)
     (setq args (cdr args))
     (while args
       (psetq args (cdr args)
@@ -216,29 +197,6 @@
 (de % args
   (f_list 'mod args)
 )
-
-(de fibo_rec (n)
-  (cond
-    ((eq (- n #1) #0) #1)
-    ('t (+ (fibo_rec (- n #1)) (fibo_rec (- n #2))))))
-
-(de fibo_cont (n cont)
-  (cond
-    ((eq (- n #1) #0) (funcall cont #1))
-    ('t
-      (fibo_cont (- n #1)
-        #'(lambda (x)
-          (fibo_cont (- n #2)
-            #'(lambda (y) (funcall cont (+ x y)))))))))
-
-(de fibo_loop (n) (
-  (lambda (a1 a2)
-    (while n
-      (psetq n (- n #1)
-             a1 a2
-             a2 (+ a1 a2)))
-    a2)
-  #0 #1))
 
 ; -------------------------------------
 ; Test 1
@@ -313,35 +271,127 @@
 ; -----------------------------
 ; test 3
 
+(de append (l m)
+  (cond ((null l) m)
+        ('t (cons (car l)
+                  (append (cdr l) m)))))
+
 'append_rec
-(append_rec '(A B C D E) '(F G))
+(append '(A B C D E) '(F G))
+
+(de append (l m cont)
+  (cond
+    ((null l) (funcall cont m))
+    ('t (append (cdr l) m
+      #'(lambda (x) (funcall cont (cons (car l) x)))))))
 
 'append_cont
-(append_cont '(A B C D E) '(F G) #'(lambda (x) x))
+(append '(A B C D E) '(F G) #'(lambda (x) x))
+
+(de append (l m cont)
+  (while l
+    (setq cont #'(lambda (x) (funcall cont (cons (car l) x)))
+          l (cdr l)))
+  (funcall cont m))
 
 'append_contloop
-(append_contloop '(A B C D E) '(F G) #'(lambda (x) x))
+(append '(A B C D E) '(F G) #'(lambda (x) x))
+
+(de append (x y)
+  ((lambda (x)
+    (while (not (atom x))
+      (setq y (cons (car x) y))
+      (setq x (cdr x)))
+    y)
+  (reverse x)))
 
 ; -----------------------------
 ; test 4
 
+(de fibo (n)
+  (cond
+    ((eq (sub n #1) #0) #1)
+    ('t (+ (fibo (sub n #1)) (fibo (sub n #2))))))
+
 'fibo_rec
 ((lambda (i r)
   (until (eq i #0)
-    (setq i (- i #1)
-          r (cons (len (fibo_rec i)) r)))
+    (setq i (sub i #1)
+          r (cons (len (fibo i)) r)))
 ) #7 #0)
+
+(de fibo (n cont)
+  (cond
+    ((eq (sub n #1) #0) (funcall cont #1))
+    ('t
+      (fibo (sub n #1)
+        #'(lambda (x)
+          (fibo (sub n #2)
+            #'(lambda (y) (funcall cont (add x y)))))))))
 
 'fibo_cont
 ((lambda (i r)
   (until (eq i #0)
-    (setq i (- i #1)
-          r (cons (len (fibo_cont i #'(lambda (x) x))) r)))
+    (setq i (sub i #1)
+          r (cons (len (fibo i #'(lambda (x) x))) r)))
 ) #7 #0)
+
+(de fibo (n)
+  ((lambda (a1 a2)
+    (while n
+      (psetq n (sub n #1)
+             a1 a2
+             a2 (+ a1 a2)))
+    a2)
+  #0 #1))
 
 'fibo_loop
 ((lambda (i r)
   (until (eq i #0)
-    (setq i (- i #1)
-          r (cons (len (fibo_loop i)) r)))
+    (setq i (sub i #1)
+          r (cons (len (fibo i)) r)))
 ) #7 #0)
+
+; -----------------------------
+; macro test 1
+
+(dm if (check then else)
+  `(cond (,check ,then) (t ,else)))
+
+(if (atom '()) 'Yes 'No)
+(if (atom '(a)) 'Yes 'No)
+
+; -----------------------------
+; macro test 2
+
+(de comp (x y)
+  (cond ((sub x y) '>)
+        ((sub y x) '<)
+        ('t '=)))
+
+; Variable collisions by a macro.
+;
+(dm switch (x y plusform zeroform minusform)
+  `((lambda (var)
+    (cond ((eq var '>) ,plusform)
+           ((eq var '<) ,minusform)
+           ('t ,zeroform)))
+  (comp ,x ,y)))
+;
+((lambda (var2) (switch var2 #5 var2 () ())) #6)
+((lambda (var) (switch var #5 var () ())) #6)
+
+; Collision avoidance with "gensym".
+;
+(dm switch (x y plusform zeroform minusform)
+  ((lambda (var) `(
+    (lambda (,var)
+      (cond ((eq ,var '>) ,plusform)
+            ((eq ,var '<) ,minusform)
+            ('t ,zeroform)))
+    (comp ,x ,y)))
+  (gensym)))
+;
+((lambda (var) (switch var #5 var () ())) #6)
+
+; -----------------------------

@@ -213,9 +213,24 @@ Index gc_makeatom_sub(char *str)
 
 Index gc_makeAtom()
 {
+  /* $ は単独でシンボルの先頭に使えない。 */
+  if (*txtp == '$' && *(txtp + 1) != '$')
+  {
+    txtp++;
+    return gc_getSymbol();
+  }
   /* 省略記法 */
   if (*txtp == '\'')
     return gc_makeatom_sub("quote ");
+  if (*txtp == '`')
+    return gc_makeatom_sub("backquote ");
+  if (*txtp == ',' && *(txtp + 1) == '@')
+  {
+    txtp++;
+    return gc_makeatom_sub("atmark ");
+  }
+  if (*txtp == ',' && *(txtp + 1) != '@')
+    return gc_makeatom_sub("comma ");
   if (*txtp == '#' && '0' <= *(txtp + 1) && *(txtp + 1) <= '9')
     return gc_makeatom_sub("num ");
   if (*txtp == '#' && *(txtp + 1) == '\'')
