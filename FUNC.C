@@ -4,8 +4,20 @@
 
 Index gc_eval_f(Index args, Index env)
 {
-
   return gc_eval(car(args), car(cdr(args)));
+}
+
+Index gc_apply_f(Index args, Index env)
+{
+  Index func;
+
+  if (!is(args, CELL))
+    return error("Not enough arguments.");
+  func = gc_eval(car(args), env);
+  ec;
+  args = gc_eval(car(cdr(args)), env);
+  ec;
+  return gc_apply(func, args, env);
 }
 
 Index quote_f(Index args, Index env)

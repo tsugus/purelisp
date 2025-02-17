@@ -104,6 +104,7 @@ void initCells()
 
   /* 基本関数の登録 */
   gc_addFunc("eval", gc_eval_f, ARGsEVAL);
+  gc_addFunc("apply", gc_apply_f, ARGsNotEVAL);
   gc_addFunc("quote", quote_f, ARGsNotEVAL);
   gc_addFunc("car", gc_car_f, ARGsEVAL);
   gc_addFunc("cdr", gc_cdr_f, ARGsEVAL);
@@ -166,7 +167,7 @@ void greeting()
   printf("\n");
   printf("\t     An pure LISP Interpreter\n\n");
   printf("\t         p u r e  L I S P\n\n");
-  printf("\t          Version 0.5.0\n");
+  printf("\t          Version 0.5.1\n");
   printf("\tThis software is released under the\n");
   printf("\t           MIT License.\n\n");
   printf("\t                (C) 2024-2025 Tsugu\n\n");

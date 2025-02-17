@@ -88,7 +88,7 @@ void nameToStr(Index, char *);
 Index gc_makeSymbol(char *);
 Index addSymbol(int, Index);
 int hash(char *);
-Index gc_readS(int);
+Index gc_readS(Index);
 void printS(Index);
 /* From "GC.C" */
 Index push(Index);
@@ -104,6 +104,7 @@ Index gc_bqev(Index, Index);
 Index gc_bqapnd(Index, Index);
 /* From "FUNC.C" */
 Index gc_eval_f(Index, Index);
+Index gc_apply_f(Index, Index);
 Index quote_f(Index, Index);
 Index gc_car_f(Index, Index);
 Index gc_cdr_f(Index, Index);
