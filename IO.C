@@ -162,6 +162,8 @@ Index gc_getSymbol()
     namebuf[i] = *(txtp++);
   }
   namebuf[i] = '\0';
+  if (!strcmp(namebuf, "nil")) /* nil は特別扱い */
+    return 0;
   hash_n = hash(namebuf);
   symbol = symbol_table[hash_n];
   while (symbol)
@@ -181,7 +183,7 @@ void printSymbol(Index atom)
 {
   if (!atom) /* nil 表示のため */
   {
-    printf("()");
+    printf("nil");
     return;
   }
   nameToStr(car(atom), namebuf);

@@ -1,5 +1,5 @@
 ;;;;; An Initial Program for "pure LISP" ;;;;;;
-;; Version 0.5.1
+;; Version 0.5.2
 ;; (C) 2024-2025 Tsugu
 ;;;;;
 
@@ -22,6 +22,8 @@
 (de cdddr (x) (cdr (cddr x)))
 
 (de caddar (x) (car (cddar x)))
+
+(de list x x)
 
 (de null (x)
   (eq x '()))
@@ -52,15 +54,16 @@
   (rev-append (rev-append l '()) m))
 
 ; -------------------------------------
-; Preparations
+; Preparation
 
-;; (assoclist* '(x y z) '(a b c)) ==> ((x . a) (y . b) (z . c))
+;; (assoclist '(x y . z) '(a b c d)) ==> ((x . a) (y . b) (z c d))
 ;;
 (de assoclist (keys values)
-  (cond ((and (null keys) (null values)) '())
+  (cond ((or (null keys) (null values)) '())
         ((and (not (atom keys)) (not (atom values)))
          (cons (cons (car keys) (car values))
-               (assoclist (cdr keys) (cdr values))))))
+               (assoclist (cdr keys) (cdr values))))
+        ((not (null keys)) (list (cons keys values)))))
 
 ;; (assoc* 'y '((x . a) (y . b) (z . c))) ==> b
 ;; (assoc* 'w '((x . a) (y . b) (z . c))) ==> ()
@@ -71,9 +74,9 @@
                     (t (assoc key (cdr lst)))))))
 
 ; -------------------------------------
-; A Meta-circular Evaluator
+; Meta-circular Evaluator
 
-(de isSUBR? (x)
+(de isSUBR (x)
   (cond ((eq x 'atom) 't)
         ((eq x 'eq) 't)
         ((eq x 'car) 't)
@@ -84,11 +87,10 @@
 (de eval_ (exp env)
   (cond
     ((eq exp 't) 't)
-    ((eq exp 'nil) 'nil)
     ((atom exp) (assoc exp env))
     (t
      (cond
-       ((isSUBR? (car exp))
+       ((isSUBR (car exp))
         (apply_ (car exp) (evlist (cdr exp) env) env))
        (t
         (apply_ (car exp) (cdr exp) env))))))
@@ -101,10 +103,10 @@
         (cond
           ((eq func 'quote) (car args))
           ((eq func 'atom)  (cond ((atom (car args)) 't)
-                                   (else 'nil)))
+                                   (else '())))
           ((eq func 'eq)    (cond
                                ((eq (car args) (cadr args)) 't)
-                               (else 'nil)))
+                               (else '())))
           ((eq func 'car)   (car (car args)))
           ((eq func 'cdr)   (cdr (car args)))
           ((eq func 'cons)  (cons (car args) (cadr args)))
@@ -123,8 +125,8 @@
 ;;  ==> a
 ;;
 (de evcond (clauses env)
-  (cond ((null clauses) 'nil)
-        ((eq 'nil (eval_ (caar clauses) env))
+  (cond ((null clauses) '())
+        ((null (eval_ (caar clauses) env))
          (evcond (cdr clauses) env))
         (t (eval_ (cadar clauses) env))))
 
@@ -138,7 +140,7 @@
 ;;   Example 1
 ;;
 ;; > *env*
-;; ()
+;; nil
 ;; > (<< 'x '(a b c))
 ;; (x a b c)
 ;; > *env*
@@ -146,11 +148,11 @@
 ;; > (>> 'x)
 ;; (a b c)
 ;; > (delenv)
-;; ()
+;; nil
 ;; > *env*
-;; ()
+;; nil
 ;; > (>> 'x)
-;; ()
+;; nil
 ;;
 ;;   Example 2
 ;;
@@ -182,22 +184,22 @@
 ;;
 (eval_ '(eq 'a 'a) '())
 
-;; == (a b c)
+;; ==> (a b c)
 ;;
 (eval_ '(cons x '(b c)) '((x . a) (y . b)))
 
-;; = list
+;; ==> list
 ;;
 (eval_ '(cond ((atom x) 'atom)
               (t 'list))
        '((x '(a b))))
 
-;; = (a b c)
+;; ==> (a b c)
 ;;
 (eval_ '(f '(b c))
        '((f . (lambda (x) (cons 'a x)))))
 
-;; = a
+;; ==> a
 ;;
 (eval_
  '((label firstatom
@@ -207,7 +209,7 @@
    y)
  '((y . ((a b) (c d)))))
 
-;; = (a c d)
+;; ==> (a c d)
 ;;
 (eval_
  '((lambda (x y) (cons x (cdr y)))
@@ -215,7 +217,7 @@
    '(b c d))
  '())
 
-;; (subst 'm 'b '(a b (a b c) d)) => (a m (a m c) d)
+;; (subst 'm 'b '(a b (a b c) d)) ==> (a m (a m c) d)
 ;;
 (eval_
  '((label subst
