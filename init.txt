@@ -1,5 +1,5 @@
 ;;;;; An Initial Program for "pure LISP" ;;;;;;
-;; Version 0.5.2
+;; Version 0.5.3
 ;; (C) 2024-2025 Tsugu
 ;;;;;
 
@@ -22,8 +22,6 @@
 (de cdddr (x) (cdr (cddr x)))
 
 (de caddar (x) (car (cddar x)))
-
-(de list x x)
 
 (de null (x)
   (eq x '()))
@@ -65,13 +63,13 @@
                (assoclist (cdr keys) (cdr values))))
         ((not (null keys)) (list (cons keys values)))))
 
-;; (assoc* 'y '((x . a) (y . b) (z . c))) ==> b
-;; (assoc* 'w '((x . a) (y . b) (z . c))) ==> ()
+;; (assoc 'y '((x . a) (y . b) (z . c))) ==> b
+;; (assoc 'w '((x . a) (y . b) (z . c))) ==> ()
 ;;
 (de assoc (key lst)
   (cond ((null lst) '())
-        (t (cond ((eq key (caar lst)) (cdar lst))
-                    (t (assoc key (cdr lst)))))))
+        ((eq key (caar lst)) (cdar lst))
+        (t (assoc key (cdr lst)))))
 
 ; -------------------------------------
 ; Meta-circular Evaluator
@@ -88,40 +86,35 @@
   (cond
     ((eq exp 't) 't)
     ((atom exp) (assoc exp env))
+    ((isSUBR (car exp))
+      (apply_ (car exp) (evlist (cdr exp) env) env))
     (t
-     (cond
-       ((isSUBR (car exp))
-        (apply_ (car exp) (evlist (cdr exp) env) env))
-       (t
-        (apply_ (car exp) (cdr exp) env))))))
+      (apply_ (car exp) (cdr exp) env))))
 
 (de apply_ (func args env)
   (cond
-    ((not (null func))
-     (cond
-       ((atom func)
-        (cond
-          ((eq func 'quote) (car args))
-          ((eq func 'atom)  (cond ((atom (car args)) 't)
-                                   (else '())))
-          ((eq func 'eq)    (cond
-                               ((eq (car args) (cadr args)) 't)
-                               (else '())))
-          ((eq func 'car)   (car (car args)))
-          ((eq func 'cdr)   (cdr (car args)))
-          ((eq func 'cons)  (cons (car args) (cadr args)))
-          ((eq func 'cond)  (evcond args env))
-          (t (eval_ (cons (assoc func env) args) env))))
-       ((eq (car func) 'label)
-        (eval_ (cons (caddr func) args)
-               (cons (cons (cadr func) (caddr func)) env)))
-       ((eq (car func) 'lambda)
-        (eval_ (caddr func)
-               (append (assoclist (cadr func) (evlist args env))
-                        env)))))
-    (t '())))
+    ((and (atom func) (not (null func)))
+    (cond
+      ((eq func 'quote) (car args))
+      ((eq func 'atom)  (cond ((atom (car args)) 't)
+                              (t '())))
+      ((eq func 'eq)    (cond
+                          ((eq (car args) (cadr args)) 't)
+                          (t '())))
+      ((eq func 'car)   (car (car args)))
+      ((eq func 'cdr)   (cdr (car args)))
+      ((eq func 'cons)  (cons (car args) (cadr args)))
+      ((eq func 'cond)  (evcond args env))
+      (t (eval_ (cons (assoc func env) args) env))))
+    ((eq (car func) 'label)
+    (eval_ (cons (caddr func) args)
+           (cons (cons (cadr func) (caddr func)) env)))
+    ((eq (car func) 'lambda)
+    (eval_ (caddr func)
+           (append (assoclist (cadr func) (evlist args env))
+                   env)))))
 
-;; (evcond '(((atom* x) x) (t (car x))) '((x a b c) (t . t)))
+;; (evcond '(((atom x) x) (t (car x))) '((x a b c) (t . t)))
 ;;  ==> a
 ;;
 (de evcond (clauses env)
@@ -130,48 +123,12 @@
          (evcond (cdr clauses) env))
         (t (eval_ (cadar clauses) env))))
 
+;; (evlist '(x y) '((x . a) (y . b))) ==> (a b)
+;;
 (de evlist (members env)
   (cond ((null members) '())
         (t (cons (eval_ (car members) env)
                  (evlist (cdr members) env)))))
-
-; -------------------------------------
-;;
-;;   Example 1
-;;
-;; > *env*
-;; nil
-;; > (<< 'x '(a b c))
-;; (x a b c)
-;; > *env*
-;; ((x a b c))
-;; > (>> 'x)
-;; (a b c)
-;; > (delenv)
-;; nil
-;; > *env*
-;; nil
-;; > (>> 'x)
-;; nil
-;;
-;;   Example 2
-;;
-;; > (<< 'cadr '(lambda (x) (car (cdr x))))
-;; (cadr lambda (x) (car (cdr x)))
-;; > (>> '(cadr '(a b c d e)))
-;; b
-;;
-
-(setq  *env* '())
-
-(de delenv () (eval '(setq *env* '()) '()))
-
-(de >> (exp) (eval_ exp *env*))
-
-(df << (var val)
-  (eval
-    `(setq *env* (cons (cons ,var ,val) *env*))
-    (car *env*)))
 
 ; -------------------------------------
 ; Test 1
@@ -229,219 +186,185 @@
    'm 'b '(a b (a b c) d))
  '())
 
-; -------------------------------------
-; Z combinator
+; =====================================
+; "Meta-circular" Environment List
 
-(de Z (f)
-  ((lambda (X) (funcall f #'(lambda x (apply (funcall X X) x))))
-    #'(lambda (X) (funcall f #'(lambda x (apply (funcall X X) x))))))
+(setq plisp
+'(
+  (caar . (lambda (x) (car (car x))))
+  (cadr . (lambda (x) (car (cdr x))))
+  (cdar . (lambda (x) (cdr (car x))))
+  (cddr . (lambda (x) (cdr (cdr x))))
+  (caaar . (lambda (x) (car (caar x))))
+  (caadr . (lambda (x) (car (cadr x))))
+  (cadar . (lambda (x) (car (cdar x))))
+  (caddr . (lambda (x) (car (cddr x))))
+  (cdaar . (lambda (x) (cdr (caar x))))
+  (cdadr . (lambda (x) (cdr (cadr x))))
+  (cddar . (lambda (x) (cdr (cdar x))))
+  (cdddr . (lambda (x) (cdr (cddr x))))
+  (caddar . (lambda (x) (car (cddar x))))
+  (null
+   .(lambda (x) (eq x '())))
+  (not
+   .(lambda (x) (cond (x '())
+                      (t 't))))
+  (and
+   . (lambda (x y)
+       (cond ((null x) '())
+             (t (cond (y 't)
+                      (t '()))))))
+  (or
+   . (lambda (x y)
+       (cond (x 't)
+             (t (cond ((null y) '())
+                      (t 't))))))
+  (rev-append
+   . (lambda (l m)
+       (cond ((null l) m)
+             (t (rev-append (cdr l) (cons (car l) m))))))
+  (reverse
+   . (lambda (l) (rev-append l '())))
+  (append
+   . (lambda (l m) (rev-append (rev-append l '()) m)))
+  (assoclist
+   . (lambda (keys values)
+       (cond ((or (null keys) (null values)) '())
+             ((and (not (atom keys)) (not (atom values)))
+              (cons (cons (car keys) (car values))
+                    (assoclist (cdr keys) (cdr values))))
+             ((not (null keys))
+              ((lambda x x) (cons keys values))))))
+  (assoc
+   . (lambda (key lst)
+       (cond ((null lst) '())
+             ((eq key (caar lst)) (cdar lst))
+             (t (assoc key (cdr lst))))))
+  (isSUBR
+   . (lambda (x)
+       (cond ((eq x 'atom) 't)
+             ((eq x 'eq) 't)
+             ((eq x 'car) 't)
+             ((eq x 'cdr) 't)
+             ((eq x 'cons) 't)
+             (t '()))))
+  (eval*
+   . (lambda (exp env)
+       (cond
+         ((eq exp 't) 't)
+         ((atom exp) (assoc exp env))
+         ((isSUBR (car exp))
+          (apply* (car exp) (evlist (cdr exp) env) env))
+         (t
+          (apply* (car exp) (cdr exp) env)))))
+  (apply*
+   . (lambda (func args env)
+       (cond
+         ((and (atom func) (not (null func)))
+          (cond
+            ((eq func 'quote) (car args))
+            ((eq func 'atom)  (cond ((atom (car args)) 't)
+                                    (t '())))
+            ((eq func 'eq)    (cond
+                                ((eq (car args) (cadr args)) 't)
+                                (t '())))
+            ((eq func 'car)   (car (car args)))
+            ((eq func 'cdr)   (cdr (car args)))
+            ((eq func 'cons)  (cons (car args) (cadr args)))
+            ((eq func 'cond)  (evcond args env))
+            (t (eval* (cons (assoc func env) args) env))))
+         ((eq (car func) 'label)
+          (eval* (cons (caddr func) args)
+                 (cons (cons (cadr func) (caddr func)) env)))
+         ((eq (car func) 'lambda)
+          (eval* (caddr func)
+                 (append (assoclist (cadr func) (evlist args env))
+                         env))))))
+  (evcond
+   . (lambda (clauses env)
+       (cond ((null clauses) '())
+             ((null (eval* (caar clauses) env))
+              (evcond (cdr clauses) env))
+             (t (eval* (cadar clauses) env)))))
+  (evlist
+   . (lambda (members env)
+       (cond ((null members) '())
+             (t (cons (eval* (car members) env)
+                      (evlist (cdr members) env))))))
+))
 
-;; (reverse_Z '(a b c d)) => (d c b a)
+; =====================================
+; Test 2
+; ("eval*" is a universal Turing machine.
+; Because the specification of "eval_" is the same as that of "eval*".)
+
+;; ==> a
 ;;
-(de reverse_Z (l)
-  (funcall (Z
-    #'(lambda (f)
-      #'(lambda (l acc)
-        (cond ((null l) acc)
-              (t (funcall f (cdr l) (cons (car l) acc)))))))
-    l '()))
+(eval_
+ '(eval* 'x '((x . a) (y . b)))
+ plisp)
 
-;; (append_Z '(a b) '(c d)) => (a b c d)
+;; ==> t
 ;;
-(de append_Z (l m)
-  (funcall (Z
-    #'(lambda (f)
-      #'(lambda (l m)
-        (cond ((null l) m)
-              (#t (funcall f (cdr l) (cons (car l) m)))))))
-    (reverse_Z l) m))
+(eval_
+ '(eval* '(eq 'a 'a) '())
+ plisp)
 
-(reverse_Z '(Sun Mon Tus Wed Thu Fri Sat))
-
-(append_Z '(Sun Mon Tus Wed) '(Thu Fri Sat))
-
-; -------------------------------------
-; Pseud number functions
-
-(de add (x y)
-  (append x y))
-
-(de mult (x y)
-  ((lambda (z)
-    (while y
-      (psetq y (cdr y)
-             z (append x z))))
-  '()))
-
-(de sub (x y)
-  (while y
-    (psetq y (cdr y)
-           x (cdr x)))
-  x)
-
-(de div (x y)
-  ((lambda (z)
-    (while (sub (add x #1) y)
-      (psetq x (sub x y)
-             z (cons 't z))))
-  '()))
-
-(de mod (x y)
-    (while (sub (add x #1) y)
-      (setq x (sub x y))))
-
-(de f_list (f args)
-  ((lambda (r)
-    (setq args (cdr args))
-    (while args
-      (psetq args (cdr args)
-             r (funcall f r (car args)))))
-  (car args)))
-
-(de + args
-  (f_list 'append args)
-)
-
-(de * args
-  (f_list 'mult args)
-)
-
-(de - args
-  (f_list 'sub args)
-)
-
-(de / args
-  (f_list 'div args)
-)
-
-(de % args
-  (f_list 'mod args)
-)
-
-; -------------------------------------
-; test 2
-
-(de append (l m)
-  (cond ((null l) m)
-        ('t (cons (car l)
-                  (append (cdr l) m)))))
-
-'append_rec
-(append '(A B C D E) '(F G))
-
-(de append (l m cont)
-  (cond
-    ((null l) (funcall cont m))
-    ('t (append (cdr l) m
-      #'(lambda (x) (funcall cont (cons (car l) x)))))))
-
-'append_cont
-(append '(A B C D E) '(F G) #'(lambda (x) x))
-
-(de append (l m cont)
-  (while l
-    (setq cont #'(lambda (x) (funcall cont (cons (car l) x)))
-          l (cdr l)))
-  (funcall cont m))
-
-'append_contloop
-(append '(A B C D E) '(F G) #'(lambda (x) x))
-
-(de append (x y)
-  ((lambda (x)
-    (while (not (atom x))
-      (setq y (cons (car x) y))
-      (setq x (cdr x)))
-    y)
-  (reverse x)))
-
-; -------------------------------------
-; test 3
-
-(de fibo (n)
-  (cond
-    ((eq (sub n #1) #0) #1)
-    ('t (+ (fibo (sub n #1)) (fibo (sub n #2))))))
-
-'fibo_rec
-((lambda (i r)
-  (until (eq i #0)
-    (setq i (sub i #1)
-          r (cons (len (fibo i)) r))))
-#8 #0)
-
-(de fibo (n cont)
-  (cond
-    ((eq (sub n #1) #0) (funcall cont #1))
-    ('t
-      (fibo (sub n #1)
-        #'(lambda (x)
-          (fibo (sub n #2)
-            #'(lambda (y) (funcall cont (add x y)))))))))
-
-'fibo_cont
-((lambda (i r)
-  (until (eq i #0)
-    (setq i (sub i #1)
-          r (cons (len (fibo i #'(lambda (x) x))) r))))
-#8 #0)
-
-(de fibo (n)
-  ((lambda (a1 a2)
-    (while n
-      (psetq n (sub n #1)
-             a1 a2
-             a2 (+ a1 a2)))
-    a2)
-  #0 #1))
-
-'fibo_loop
-((lambda (i r)
-  (until (eq i #0)
-    (setq i (sub i #1)
-          r (cons (len (fibo i)) r))))
-#8 #0)
-
-; -------------------------------------
-; macro test 1
-
-(dm if (check then else)
-  `(cond (,check ,then) (t ,else)))
-
-(if (atom '()) 'Yes 'No)
-(if (atom '(a)) 'Yes 'No)
-
-; -------------------------------------
-; macro test 2
-
-(de comp (x y)
-  (cond ((sub x y) '>)
-        ((sub y x) '<)
-        ('t '=)))
-
-;; Variable collisions by a macro.
+;; ==> (a b c)
 ;;
-(dm switch (x y plusform zeroform minusform)
-  `((lambda (var)
-    (cond ((eq var '>) ,plusform)
-           ((eq var '<) ,minusform)
-           ('t ,zeroform)))
-  (comp ,x ,y)))
+(eval_
+ '(eval* '(cons x '(b c)) '((x . a) (y . b)))
+ plisp)
 
-((lambda (var2) (switch var2 #5 var2 () ())) #6)
-((lambda (var) (switch var #5 var () ())) #6)
-
-;; Collision avoidance with "gensym".
+;; ==> list
 ;;
-(dm switch (x y plusform zeroform minusform)
-  ((lambda (var) `(
-    (lambda (,var)
-      (cond ((eq ,var '>) ,plusform)
-            ((eq ,var '<) ,minusform)
-            ('t ,zeroform)))
-    (comp ,x ,y)))
-  (gensym)))
+(eval_
+ '(eval* '(cond ((atom x) 'atom)
+                (t 'list))
+         '((x '(a b))))
+ plisp)
 
-((lambda (var) (switch var #5 var () ())) #6)
+;; ==> (a b c)
+;;
+(eval_
+ '(eval* '(f '(b c))
+         '((f . (lambda (x) (cons 'a x)))))
+ plisp)
+
+;; ==> a
+;;
+(eval_
+ '(eval*
+   '((label firstatom
+            (lambda (x)
+              (cond ((atom x) x)
+                    (t (firstatom (car x))))))
+     y)
+   '((y . ((a b) (c d)))))
+ plisp)
+
+;; = (a c d)
+;;
+(eval_
+ '(eval*
+   '((lambda (x y) (cons x (cdr y)))
+     'a
+     '(b c d))
+   '())
+ plisp)
+
+;; (subst 'm 'b '(a b (a b c) d)) => (a m (a m c) d)
+;; *** It takes time! ***
+;(eval_
+; '(eval*
+;   '((label subst
+;            (lambda (x y z)
+;              (cond ((atom z) (cond ((eq z y) x)
+;                                    (t z)))
+;                    (t (cons (subst x y (car z))
+;                             (subst x y (cdr z)))))))
+;     'm 'b '(a b (a b c) d))
+;   '())
+; plisp)
 
 ; -------------------------------------

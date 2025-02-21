@@ -501,3 +501,10 @@ Index len_f(Index args, Index env)
   sprintf(namebuf, "%d", i);
   return gc_makeSymbol(namebuf);
 }
+
+Index cls_f(Index args, Index env)
+{
+  system("reset");     /* for Linux, Mac */
+  /* system("cls"); */ /* for Linux, Mac */
+  return 0;
+}

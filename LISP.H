@@ -7,10 +7,10 @@
 /*                 (C) 2024-2025 Tsugu */
 /*                                     */
 
-#define CELLS_SIZE 0x10000  /* セルの総数 */
+#define CELLS_SIZE 0x18000  /* セルの総数 */
 #define TEXTBUF_SIZE 100    /* 入力テキスト用バッファ */
 #define SYMBOLTABLE_SIZE 64 /* シンボルを割り振るハッシュテーブルのサイズ */
-#define STACK_SIZE 0x1000   /* GC 用スタックのサイズ */
+#define STACK_SIZE 0x3000   /* GC 用スタックのサイズ */
 #define tag(x) (tags[x])    /* ID を格納するタグ */
 #define car(x) (cells[x].pair.car).index
 #define cdr(x) (cells[x].pair.cdr).index
@@ -131,3 +131,4 @@ Index gc_gensym_f(Index, Index);
 Index quit_f(Index, Index);
 Index gc_num_f(Index, Index);
 Index len_f(Index, Index);
+Index cls_f(Index, Index);
