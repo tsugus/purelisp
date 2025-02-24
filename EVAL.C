@@ -1,5 +1,5 @@
 /*                                   */
-/*       Evaluator & functions       */
+/*             Evaluator             */
 /*                                   */
 
 #include <stdio.h>

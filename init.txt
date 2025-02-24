@@ -1,5 +1,5 @@
 ;;;;; An Initial Program for "pure LISP" ;;;;;;
-;; Version 0.5.3
+;; Version 0.5.4
 ;; (C) 2024-2025 Tsugu
 ;;;;;
 
@@ -295,8 +295,6 @@
 
 ; =====================================
 ; Test 2
-; ("eval*" is a universal Turing machine.
-; Because the specification of "eval_" is the same as that of "eval*".)
 
 ;; ==> a
 ;;
