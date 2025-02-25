@@ -168,7 +168,7 @@ void greeting()
   printf("\n");
   printf("\t     An pure LISP Interpreter\n\n");
   printf("\t         p u r e  L I S P\n\n");
-  printf("\t          Version 0.5.3\n");
+  printf("\t          Version 0.5.5\n");
   printf("\tThis software is released under the\n");
   printf("\t           MIT License.\n\n");
   printf("\t                (C) 2024-2025 Tsugu\n\n");
