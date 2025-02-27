@@ -366,6 +366,8 @@ Index gc_readS(Index from_top)
     return gc_makeList(from_top);
   else if (!isSeparator(*txtp))
     return gc_makeAtom();
+  else if (*txtp++ == ']') /* ']' は入力のための補助記号なので特別扱い。閉じカッコはそもそもここに来ない */
+    return gc_readS(from_top);
   else
     return error("Unexpected character.");
 }

@@ -147,10 +147,8 @@ void top_loop()
       char *chp;
 
       printf("%s\n", message);
-      printf("> ");
-      for (chp = textbuf; chp <= txtp; chp++)
-        putchar(*chp);
-      putchar('\n');
+      if ((*txtp - 1) != EOF) /* init.txt を読み込んだときに > を表示させない */
+        printf("> %c\n", *(txtp - 1));
       *txtp = '\0';
       continue;
     }
@@ -166,11 +164,11 @@ void top_loop()
 void greeting()
 {
   printf("\n");
-  printf("\t     An pure LISP Interpreter\n\n");
-  printf("\t         p u r e  L I S P\n\n");
-  printf("\t          Version 0.5.5\n");
+  printf("\t      A Pure LISP Interpreter      \n\n");
+  printf("\t         P u r e  L I S P          \n\n");
+  printf("\t           Version 0.5.6           \n");
   printf("\tThis software is released under the\n");
-  printf("\t           MIT License.\n\n");
+  printf("\t            MIT License.           \n\n");
   printf("\t                (C) 2024-2025 Tsugu\n\n");
 }
 
