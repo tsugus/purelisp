@@ -215,14 +215,12 @@ Index gc_makeatom_sub(char *str)
 
 Index gc_makeAtom()
 {
-  /* $ は単独でシンボルの先頭に使えない。 */
-  if (*txtp == '$' && *(txtp + 1) != '$')
+  if (*txtp == '$' && *(txtp + 1) != '$') /* $ は単独でシンボルの先頭に使えない。 */
   {
     txtp++;
     return gc_getSymbol();
   }
-  /* 省略記法 */
-  if (*txtp == '\'')
+  if (*txtp == '\'') /* 省略記法 */
     return gc_makeatom_sub("quote ");
   if (*txtp == '`')
     return gc_makeatom_sub("backquote ");
@@ -240,7 +238,6 @@ Index gc_makeAtom()
     txtp++;
     return gc_makeatom_sub("function ");
   }
-
   return gc_getSymbol();
 }
 

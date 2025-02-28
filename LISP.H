@@ -76,6 +76,7 @@ extern int err;
 extern char *message;
 extern FILE *ifp;
 extern int sp; /* GC 用スタックポインタ */
+extern int no_input_after_GC;
 #endif
 
 /* From "MAIN.C" */

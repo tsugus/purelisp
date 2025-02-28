@@ -20,6 +20,7 @@ int err;
 char *message;
 FILE *ifp;
 int sp;
+int no_input_after_GC;
 
 /* インデックス n のセルに name を持つシンボルを作ってテーブルに登録 */
 void gc_addSystemSymbol(Index n, char *name)
@@ -142,6 +143,7 @@ void top_loop()
   {
     err = off;
     toplevel = gc_readS(1);
+    no_input_after_GC = 0;
     if (err != off)
     {
       char *chp;
@@ -155,6 +157,8 @@ void top_loop()
     toplevel = gc_eval(toplevel, 0);
     if (err == off)
     {
+      if (no_input_after_GC)
+        putchar('\n');
       printS(toplevel);
       putchar('\n');
     }
@@ -166,7 +170,7 @@ void greeting()
   printf("\n");
   printf("\t      A Pure LISP Interpreter      \n\n");
   printf("\t         P u r e  L I S P          \n\n");
-  printf("\t           Version 0.5.6           \n");
+  printf("\t           Version 0.5.7           \n");
   printf("\tThis software is released under the\n");
   printf("\t            MIT License.           \n\n");
   printf("\t                (C) 2024-2025 Tsugu\n\n");

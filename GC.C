@@ -117,7 +117,9 @@ void mark_and_sweep()
   Index indx;
   int i;
 
-  printf("... Gabage Collection ! ...\n");
+  putchar('.');
+  fflush(stdout);
+  no_input_after_GC = 1;
   /* マイナスで印をつける */
   for (indx = 0; indx < CELLS_SIZE; indx++)
     tag(indx) = -abs(tag(indx));
