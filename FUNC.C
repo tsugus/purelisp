@@ -504,7 +504,8 @@ Index len_f(Index args, Index env)
 
 Index cls_f(Index args, Index env)
 {
-  system("reset");     /* for Linux, Mac */
-  /* system("cls"); */ /* for Linux, Mac */
+  printf("\033[2J");   /* Clear the screen. */
+  printf("\033[0;0H"); /* Move the cursol to (0,0). */
+  err = print_no_more;
   return 0;
 }

@@ -151,6 +151,23 @@ int hash(char *str)
   return hash_n;
 }
 
+/* その名前を持つシンボルシンボルを symbol_table[hash_n] で探す */
+Index findSymbol(int hash_n, char *name)
+{
+  Index symbol;
+  char strbuf[TEXTBUF_SIZE];
+
+  symbol = symbol_table[hash_n];
+  while (symbol) /* 見つからなかったら 0 を返す */
+  {
+    nameToStr(car(symbol), strbuf);
+    if (!strcmp(strbuf, name))
+      return symbol;
+    symbol = cdr(cdr(symbol));
+  }
+  return symbol;
+}
+
 Index gc_getSymbol()
 {
   int i, hash_n;
@@ -165,14 +182,9 @@ Index gc_getSymbol()
   if (!strcmp(namebuf, "nil")) /* nil は特別扱い */
     return 0;
   hash_n = hash(namebuf);
-  symbol = symbol_table[hash_n];
-  while (symbol)
-  {
-    nameToStr(car(symbol), namebuf2);
-    if (!strcmp(namebuf2, namebuf))
-      return symbol;
-    symbol = cdr(cdr(symbol));
-  }
+  symbol = findSymbol(hash_n, namebuf);
+  if (symbol)
+    return symbol;
   symbol = gc_makeSymbol(namebuf);
   ec;
   addSymbol(hash_n, symbol);
@@ -237,6 +249,11 @@ Index gc_makeAtom()
   {
     txtp++;
     return gc_makeatom_sub("function ");
+  }
+  if (*txtp == '#' && *(txtp + 1) == '=')
+  {
+    txtp++;
+    return gc_makeatom_sub("len ");
   }
   return gc_getSymbol();
 }

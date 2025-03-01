@@ -1,5 +1,5 @@
 ;;;;; An Initial Program for "pure LISP" ;;;;;;
-; Version 0.5.5
+; Version 0.5.6
 ; (C) 2024-2025 Tsugu
 
 ; -------------------------------------
@@ -74,114 +74,95 @@
   (cdar y))
 
 ; -------------------------------
-; Functions of Puseud Numbers (Very inefficient!)
+; Functions of Puseud Numbers (inefficient!)
 
-(de add (x y)
+'Number_Test
+'0 #0  '1 #1  '2 #2  '3 #3  '4 #4  '5 #5
+
+(de +1 (x)
+  (cons 't x))
+
+(de -1 (x)
+  (cond ((eq #0 x) '())
+        (t (cdr x))))
+
+(de + (x y)
   (append x y))
 
-(de mult (x y)
+(de * (x y)
   ((lambda (z)
     (while y
       (psetq y (cdr y)
              z (append x z))))
   '()))
 
-(de sub (x y)
+(de - (x y)
   (while y
     (psetq y (cdr y)
            x (cdr x)))
   x)
 
-(de div (x y)
+(de / (x y)
   ((lambda (z)
-    (while (sub (add x #1) y)
-      (psetq x (sub x y)
+    (while (- (+ x #1) y)
+      (psetq x (- x y)
              z (cons 't z))))
   '()))
 
-(de mod (x y)
-    (while (sub (add x #1) y)
-      (setq x (sub x y))))
+(de % (x y)
+    (while (- (+ x #1) y)
+      (setq x (- x y))))
 
-(de f_list (f args)
-  ((lambda (r)
-    (setq args (cdr args))
-    (while args
-      (psetq args (cdr args)
-             r (funcall f r (car args)))))
-  (car args)))
+(de |-| (x y)
+  (+ (- x y) (- y x)))
 
-(de + args
-  (f_list 'append args)
-)
+(de = (x y)
+  (eq #0 (|-| x y)))
 
-(de * args
-  (f_list 'mult args)
-)
+(de < (x y)
+  (cond ((- y x) 't)))
 
-(de - args
-  (f_list 'sub args)
-)
-
-(de / args
-  (f_list 'div args)
-)
-
-(de % args
-  (f_list 'mod args)
-)
-
-'0
-#0
-'1
-#1
-'2
-#2
-'3
-#3
-'4
-#4
-'5
-#5
+(de > (x y)
+  (cond ((- x y) 't)))
 
 '365_/_12_=_30
-(len (/ #365 #12))
+#=(/ #365 #12)
 
 '365_%_12_=_5
-(len (% #365 #12))
+#=(% #365 #12)
 
 (de fibo (n)
   (cond
-    ((eq (sub n #1) #0) #1)
-    ('t (+ (fibo (sub n #1)) (fibo (sub n #2))))))
+    ((eq (- n #1) #0) #1)
+    ('t (+ (fibo (- n #1)) (fibo (- n #2))))))
 
 'fibo_rec
 ((lambda (i r)
-  (until (eq i #0)
-    (setq i (sub i #1)
+  (until (eq #0 i)
+    (setq i (-1 i)
           r (cons (len (fibo i)) r)))
 ) #8 #0)
 
 (de fibo (n cont)
   (cond
-    ((eq (sub n #1) #0) (funcall cont #1))
+    ((eq (-1 n) #0) (funcall cont #1))
     ('t
-      (fibo (sub n #1)
+      (fibo (-1 n)
         #'(lambda (x)
-          (fibo (sub n #2)
-            #'(lambda (y) (funcall cont (add x y)))))))))
+          (fibo (- n #2)
+            #'(lambda (y) (funcall cont (+ x y)))))))))
 
 'fibo_cont
 ((lambda (i r)
-  (until (eq i #0)
-    (setq i (sub i #1)
+  (until (eq #0 i)
+    (setq i (-1 i)
           r (cons (len (fibo i #'(lambda (x) x))) r)))
 ) #8 #0)
 
 (de fibo (n)
   ((lambda (a1 a2)
     (while n
-      (psetq n (sub n #1)
+      (psetq n (-1 n)
              a1 a2
              a2 (+ a1 a2)))
     a2)
@@ -189,8 +170,8 @@
 
 'fibo_loop
 ((lambda (i r)
-  (until (eq i #0)
-    (setq i (sub i #1)
+  (until (eq #0 i)
+    (setq i (-1 i)
           r (cons (len (fibo i)) r)))
 ) #8 #0)
 
@@ -204,8 +185,8 @@
 (if (atom '(a)) 'Yes 'No)
 
 (de comp (x y)
-  (cond ((sub x y) '>)
-        ((sub y x) '<)
+  (cond ((- x y) '>)
+        ((- y x) '<)
         ('t '=)))
 
 ; Variable collisions by a macro.

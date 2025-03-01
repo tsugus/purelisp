@@ -66,19 +66,8 @@ Index purseAtom(Index indx)
     nameToStr(car(indx), namebuf);
     /* シンボルテーブルの検索（機能が gc_getSymbol と重複している！） */
     hash_n = hash(namebuf);
-    symbol = symbol_table[hash_n];
-    while (symbol)
-    {
-      nameToStr(car(symbol), namebuf2);
-      if (!strcmp(namebuf2, namebuf))
-      {
-        symbol = indx;
-        break;
-      }
-      symbol = cdr(cdr(symbol));
-    }
-    /* indx がシンボルテーブルにない場合 */
-    if (!symbol)
+    symbol = findSymbol(hash_n, namebuf);
+    if (!symbol) /* indx がシンボルテーブルにない場合 */
       addSymbol(hash(namebuf), indx);
   }
   return indx;
